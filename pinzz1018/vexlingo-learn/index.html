@@ -2903,6 +2903,31 @@
       <button class="btn-admin danger" id="btn-admin-toggle-maintenance" onclick="adminToggleMaintenance()">Aktifkan</button>
     </div>
 
+    <!-- Redeem Code Generator -->
+    <div class="admin-action-row" style="margin-top:10px;flex-direction:column;align-items:stretch;gap:10px;">
+      <div>
+        <div class="admin-action-title">🎟️ Generate Kode Redeem</div>
+        <div class="admin-action-sub">Buat kode aktivasi Pro untuk dikirim ke buyer.</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input id="admin-redeem-note" type="text" placeholder="Catatan (email buyer, opsional)" style="flex:1;padding:9px 12px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;color:#F0EEFF;font-size:12px;outline:none;" />
+        <button class="btn-admin" onclick="adminGenerateRedeemCode()" style="white-space:nowrap;">Generate</button>
+      </div>
+      <div id="admin-redeem-result" style="display:none;background:rgba(251,191,36,.08);border:1.5px solid rgba(251,191,36,.3);border-radius:10px;padding:12px;">
+        <div style="font-size:10px;color:#8B7FA8;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Kode Baru</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div id="admin-redeem-code-display" style="flex:1;font-size:16px;font-weight:900;color:#fbbf24;font-family:'Orbitron',monospace;letter-spacing:2px;"></div>
+          <button onclick="adminCopyRedeemCode()" style="padding:7px 12px;background:rgba(251,191,36,.2);border:1.5px solid rgba(251,191,36,.4);border-radius:8px;color:#fbbf24;font-size:11px;font-weight:700;cursor:pointer;" id="admin-redeem-copy-btn">Salin</button>
+        </div>
+      </div>
+      <!-- List kode aktif -->
+      <div id="admin-redeem-list-wrap" style="display:none;">
+        <div style="font-size:10px;color:#8B7FA8;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Kode Aktif</div>
+        <div id="admin-redeem-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;"></div>
+      </div>
+      <button onclick="adminLoadRedeemCodes()" style="padding:7px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:8px;color:#8B7FA8;font-size:11px;font-weight:600;cursor:pointer;">Lihat semua kode aktif</button>
+    </div>
+
     <!-- User Management Section -->
     <div class="admin-msgs-section" style="margin-top:22px;">
       <div class="admin-msgs-header">
@@ -3034,6 +3059,38 @@
         </div>
         <a href="https://trakteer.id/vexlingo-pinzz" target="_blank" rel="noopener" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border:none;border-radius:12px;color:#1a1a2e;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box;">&#x1F4B3; Bayar Sekarang &#x2014; Rp 10.000</a>
         <a href="https://t.me/pinzz1018" target="_blank" rel="noopener" style="display:block;width:100%;padding:11px;background:rgba(37,99,235,.15);border:1.5px solid rgba(37,99,235,.4);border-radius:12px;color:#93C5FD;font-size:13px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box;">&#x2708; Konfirmasi via Telegram @pinzz1018</a>
+
+        <!-- ── Redeem Code Section ── -->
+        <div id="redeem-section" style="margin-top:4px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
+            <span style="font-size:10px;color:#8B7FA8;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;">Sudah transfer?</span>
+            <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
+          </div>
+          <div style="background:rgba(251,191,36,.05);border:1.5px solid rgba(251,191,36,.2);border-radius:14px;padding:14px;">
+            <div style="font-size:11px;color:#fbbf24;font-weight:700;letter-spacing:.5px;margin-bottom:2px;">⚡ Masukkan Kode Aktivasi</div>
+            <div style="font-size:11px;color:#8B7FA8;margin-bottom:12px;line-height:1.5;">Kode dikirim ke Telegram kamu setelah transfer dikonfirmasi.</div>
+            <div style="display:flex;gap:8px;align-items:stretch;">
+              <input
+                id="redeem-code-input"
+                type="text"
+                placeholder="Contoh: VEX-X7K2-PRO"
+                maxlength="20"
+                oninput="this.value = this.value.toUpperCase()"
+                style="flex:1;padding:11px 13px;background:rgba(255,255,255,.06);border:1.5px solid rgba(251,191,36,.3);border-radius:10px;color:#F0EEFF;font-size:13px;font-weight:600;font-family:'Orbitron',monospace;letter-spacing:1px;outline:none;transition:border-color .2s;"
+                onfocus="this.style.borderColor='rgba(251,191,36,.7)'"
+                onblur="this.style.borderColor='rgba(251,191,36,.3)'"
+                onkeydown="if(event.key==='Enter')redeemProCode()"
+              />
+              <button
+                onclick="redeemProCode()"
+                id="redeem-submit-btn"
+                style="padding:11px 16px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border:none;border-radius:10px;color:#1a1a2e;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;transition:opacity .2s;flex-shrink:0;"
+              >Aktifkan</button>
+            </div>
+            <div id="redeem-msg" style="display:none;margin-top:10px;font-size:12px;border-radius:8px;padding:8px 12px;"></div>
+          </div>
+        </div>
       </div>
 
       <button onclick="closeProModal()" style="width:100%;padding:12px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;color:#8B7FA8;font-size:13px;font-weight:500;cursor:pointer;">Tutup</button>
@@ -4905,6 +4962,144 @@
     vexSpeak(_userCache.isPro ? 'unlock' : 'welcome');
   }
   window.adminTogglePro = adminTogglePro;
+
+  /* ── Redeem Code: Generate (Admin) ── */
+  function _genRedeemCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const seg = n => Array.from({length:n}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+    return `VEX-${seg(4)}-${seg(3)}`;
+  }
+
+  async function adminGenerateRedeemCode() {
+    const note = (document.getElementById('admin-redeem-note')?.value || '').trim();
+    const code = _genRedeemCode();
+    const { doc, setDoc, serverTimestamp } = window._dbFns;
+    try {
+      await setDoc(doc(window._db, 'redeemCodes', code), {
+        code,
+        note,
+        used: false,
+        usedBy: null,
+        usedAt: null,
+        createdAt: serverTimestamp()
+      });
+      const display = document.getElementById('admin-redeem-code-display');
+      const result = document.getElementById('admin-redeem-result');
+      if (display) display.textContent = code;
+      if (result) result.style.display = 'block';
+      document.getElementById('admin-redeem-note').value = '';
+      // refresh list if open
+      const listWrap = document.getElementById('admin-redeem-list-wrap');
+      if (listWrap && listWrap.style.display !== 'none') adminLoadRedeemCodes();
+    } catch(e) {
+      alert('Gagal generate kode: ' + e.message);
+    }
+  }
+  window.adminGenerateRedeemCode = adminGenerateRedeemCode;
+
+  function adminCopyRedeemCode() {
+    const code = document.getElementById('admin-redeem-code-display')?.textContent;
+    if (!code) return;
+    navigator.clipboard.writeText(code).then(() => {
+      const btn = document.getElementById('admin-redeem-copy-btn');
+      if (btn) { btn.textContent = 'Tersalin ✓'; setTimeout(() => btn.textContent = 'Salin', 1800); }
+    });
+  }
+  window.adminCopyRedeemCode = adminCopyRedeemCode;
+
+  async function adminLoadRedeemCodes() {
+    const listWrap = document.getElementById('admin-redeem-list-wrap');
+    const list = document.getElementById('admin-redeem-list');
+    if (!listWrap || !list) return;
+    listWrap.style.display = 'block';
+    list.innerHTML = '<div style="font-size:12px;color:#8B7FA8;padding:4px;">Memuat...</div>';
+    try {
+      const { collection, query, where, getDocs, orderBy, doc } = window._dbFns;
+      const snap = await getDocs(query(collection(window._db, 'redeemCodes'), where('used','==',false), orderBy('createdAt','desc')));
+      if (snap.empty) { list.innerHTML = '<div style="font-size:12px;color:#8B7FA8;padding:4px;">Tidak ada kode aktif.</div>'; return; }
+      list.innerHTML = '';
+      snap.forEach(d => {
+        const data = d.data();
+        const el = document.createElement('div');
+        el.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;';
+        el.innerHTML = `
+          <span style="flex:1;font-size:13px;font-weight:700;font-family:'Orbitron',monospace;color:#fbbf24;letter-spacing:1px;">${data.code}</span>
+          ${data.note ? `<span style="font-size:10px;color:#8B7FA8;">${data.note}</span>` : ''}
+          <button onclick="adminDeleteRedeemCode('${data.code}')" style="padding:4px 8px;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);border-radius:6px;color:#F87171;font-size:10px;font-weight:700;cursor:pointer;">Hapus</button>
+        `;
+        list.appendChild(el);
+      });
+    } catch(e) {
+      list.innerHTML = `<div style="font-size:12px;color:#F87171;padding:4px;">Error: ${e.message}</div>`;
+    }
+  }
+  window.adminLoadRedeemCodes = adminLoadRedeemCodes;
+
+  async function adminDeleteRedeemCode(code) {
+    if (!confirm(`Hapus kode ${code}?`)) return;
+    const { doc, deleteDoc } = window._dbFns;
+    try {
+      await deleteDoc(doc(window._db, 'redeemCodes', code));
+      adminLoadRedeemCodes();
+    } catch(e) { alert('Gagal hapus: ' + e.message); }
+  }
+  window.adminDeleteRedeemCode = adminDeleteRedeemCode;
+
+  /* ── Redeem Code: Activate (User) ── */
+  async function redeemProCode() {
+    const input = document.getElementById('redeem-code-input');
+    const msg = document.getElementById('redeem-msg');
+    const btn = document.getElementById('redeem-submit-btn');
+    if (!input || !msg || !btn) return;
+
+    const code = input.value.trim().toUpperCase();
+    if (!code) return;
+
+    const showMsg = (text, isError) => {
+      msg.style.display = 'block';
+      msg.style.background = isError ? 'rgba(248,113,113,.12)' : 'rgba(45,212,191,.12)';
+      msg.style.border = `1px solid ${isError ? 'rgba(248,113,113,.3)' : 'rgba(45,212,191,.3)'}`;
+      msg.style.color = isError ? '#F87171' : '#2DD4BF';
+      msg.textContent = text;
+    };
+
+    btn.textContent = '...';
+    btn.disabled = true;
+
+    try {
+      const { doc, getDoc, updateDoc, serverTimestamp } = window._dbFns;
+      const codeRef = doc(window._db, 'redeemCodes', code);
+      const snap = await getDoc(codeRef);
+
+      if (!snap.exists()) { showMsg('❌ Kode tidak ditemukan.', true); btn.textContent = 'Aktifkan'; btn.disabled = false; return; }
+      const data = snap.data();
+      if (data.used) { showMsg('❌ Kode ini sudah pernah dipakai.', true); btn.textContent = 'Aktifkan'; btn.disabled = false; return; }
+
+      const user = window._auth?.currentUser;
+      if (!user) { showMsg('❌ Kamu harus login dulu.', true); btn.textContent = 'Aktifkan'; btn.disabled = false; return; }
+
+      // Mark code as used
+      await updateDoc(codeRef, { used: true, usedBy: user.uid, usedAt: serverTimestamp() });
+      // Grant Pro
+      _userCache.isPro = true;
+      await saveUserData({ isPro: true });
+      updateProUI();
+      updateWatchAdUI();
+      updateHeartsUI();
+
+      showMsg('✅ Pro aktif! Selamat, kamu sekarang VexLingo Pro 🚀', false);
+      input.value = '';
+      btn.textContent = 'Aktifkan';
+      btn.disabled = false;
+
+      setTimeout(() => { closeProModal(); showProUnlockedModal(); }, 1200);
+    } catch(e) {
+      showMsg('❌ Error: ' + e.message, true);
+      btn.textContent = 'Aktifkan';
+      btn.disabled = false;
+    }
+  }
+  window.redeemProCode = redeemProCode;
 
   /* ── Admin: User Management ── */
   let _adminAllUsers = [];
