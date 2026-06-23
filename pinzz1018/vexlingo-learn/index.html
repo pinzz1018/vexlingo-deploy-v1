@@ -4915,14 +4915,14 @@
     if (!listEl) return;
     listEl.innerHTML = '<div style="font-size:12px;color:#8B7FA8;text-align:center;padding:12px;">Memuat...</div>';
     try {
-      const { collection, getDocs, orderBy, query } = window._dbFns;
-      const q = query(collection(window._db, 'users'), orderBy('email'));
-      const snap = await getDocs(q);
+      const { collection, getDocs } = window._dbFns;
+      const snap = await getDocs(collection(window._db, 'users'));
       _adminAllUsers = [];
       snap.forEach(d => {
         const data = d.data();
         _adminAllUsers.push({ uid: d.id, email: data.email || '(no email)', isPro: !!data.isPro, displayName: data.displayName || '' });
       });
+      _adminAllUsers.sort((a, b) => a.email.localeCompare(b.email));
       adminRenderUsers(_adminAllUsers);
     } catch(e) {
       listEl.innerHTML = '<div style="font-size:12px;color:#F87171;text-align:center;padding:12px;">Gagal memuat: ' + e.message + '</div>';
