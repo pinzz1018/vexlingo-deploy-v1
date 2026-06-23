@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub Pages Deploy</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d1117; --surface: #161b22; --surface2: #21262d; --border: #30363d;
+    --accent: #58a6ff; --accent2: #79c0ff; --text: #e6edf3; --muted: #8b949e;
+    --success: #3fb950; --error: #f85149; --radius: 12px;
+    --sidebar-w: 220px;
+  }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 16px 60px; transition: padding-left 0.3s; }
+
+  /* ── HAMBURGER ── */
+  .hamburger { position: fixed; top: 16px; left: 16px; z-index: 200; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; width: 38px; height: 38px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; transition: background 0.2s; }
+  .hamburger:hover { background: var(--border); }
+  .hamburger span { display: block; width: 18px; height: 2px; background: var(--text); border-radius: 2px; transition: all 0.3s; }
+  .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  /* ── SIDEBAR ── */
+  .sidebar { position: fixed; top: 0; left: -var(--sidebar-w); left: -240px; width: var(--sidebar-w); height: 100vh; background: var(--surface); border-right: 1px solid var(--border); z-index: 150; display: flex; flex-direction: column; padding: 70px 12px 24px; gap: 4px; transition: left 0.3s cubic-bezier(.4,0,.2,1); }
+  .sidebar.open { left: 0; }
+  .sidebar-title { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; padding: 0 8px 8px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--muted); transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(88,166,255,0.12); color: var(--accent2); }
+  .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .sidebar-sep { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+
+  /* ── OVERLAY ── */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .overlay.show { opacity: 1; pointer-events: all; }
+
+  /* ── HEADER ── */
+  header { text-align: center; margin-bottom: 40px; margin-top: 8px; }
+  .logo { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #238636, #2ea043); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .logo-text { font-size: 22px; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  header p { color: var(--muted); font-size: 14px; }
+
+  /* ── CARD ── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 22px; }
+
+  /* ── TAB HEADER ── */
+  .tab-header { display: flex; gap: 4px; background: var(--surface2); border-radius: 10px; padding: 4px; }
+  .tab-btn { flex: 1; padding: 9px 12px; border: none; border-radius: 7px; background: none; color: var(--muted); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .tab-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+  .tab-btn:hover:not(.active) { color: var(--text); }
+
+  /* ── PANEL ── */
+  .panel { display: none; flex-direction: column; gap: 22px; }
+  .panel.active { display: flex; }
+
+  /* ── FIELDS ── */
+  .field { display: flex; flex-direction: column; gap: 8px; }
+  label { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  input[type="text"], input[type="password"] { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 12px 14px; outline: none; transition: border-color 0.2s; width: 100%; }
+  input[type="text"]:focus, input[type="password"]:focus { border-color: var(--accent); }
+  .token-wrap { position: relative; }
+  .token-wrap input { padding-right: 44px; }
+  .toggle-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 4px; }
+
+  /* ── REPO LOADER ── */
+  .repo-load-row { display: flex; gap: 8px; }
+  .repo-load-row input { flex: 1; }
+  .btn-load { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--accent2); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; padding: 0 16px; cursor: pointer; white-space: nowrap; transition: background 0.2s, border-color 0.2s; }
+  .btn-load:hover:not(:disabled) { background: var(--border); border-color: var(--accent); }
+  .btn-load:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── REPO LIST ── */
+  .repo-list-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .repo-list-label { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .repo-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; padding-right: 2px; }
+  .repo-list::-webkit-scrollbar { width: 4px; }
+  .repo-list::-webkit-scrollbar-track { background: transparent; }
+  .repo-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .repo-item { display: flex; align-items: center; gap: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: all 0.15s; }
+  .repo-item:hover { border-color: var(--accent); background: rgba(88,166,255,0.05); }
+  .repo-item.selected { border-color: var(--accent); background: rgba(88,166,255,0.1); }
+  .repo-item-name { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text); flex: 1; }
+  .repo-item-url { font-size: 11px; color: var(--muted); }
+  .repo-check { width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 10px; transition: all 0.15s; }
+  .repo-item.selected .repo-check { border-color: var(--accent); background: var(--accent); color: #fff; }
+  .repo-empty { font-size: 13px; color: var(--muted); padding: 16px; text-align: center; background: var(--surface2); border-radius: 8px; border: 1px dashed var(--border); }
+  .repo-loading { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); padding: 14px; background: var(--surface2); border-radius: 8px; }
+
+  /* ── UPLOAD ── */
+  .upload-area { border: 2px dashed var(--border); border-radius: 10px; padding: 32px 20px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
+  .upload-area:hover, .upload-area.dragover { border-color: var(--accent); background: rgba(88,166,255,0.05); }
+  .upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon { font-size: 32px; margin-bottom: 10px; }
+  .upload-label { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .upload-hint { font-size: 12px; color: var(--muted); }
+  .file-selected { display: flex; align-items: center; gap: 10px; background: rgba(88,166,255,0.1); border: 1px solid rgba(88,166,255,0.3); border-radius: 8px; padding: 12px 14px; font-size: 13px; }
+  .file-selected .fname { font-family: 'JetBrains Mono', monospace; color: var(--accent2); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-clear { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0; line-height: 1; }
+
+  /* ── BUTTONS ── */
+  .btn-deploy { background: #238636; border: 1px solid #2ea043; border-radius: 10px; color: #fff; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700; padding: 15px; cursor: pointer; width: 100%; transition: background 0.2s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-deploy:hover:not(:disabled) { background: #2ea043; }
+  .btn-deploy:active:not(:disabled) { transform: scale(0.98); }
+  .btn-deploy:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-update { background: #1f4e8c; border: 1px solid var(--accent); border-radius: 10px; color: #fff; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 700; padding: 15px; cursor: pointer; width: 100%; transition: background 0.2s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-update:hover:not(:disabled) { background: #2461ad; }
+  .btn-update:active:not(:disabled) { transform: scale(0.98); }
+  .btn-update:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── STATUS ── */
+  .status { border-radius: 10px; padding: 16px; font-size: 13px; display: none; }
+  .status.loading { display: flex; align-items: center; gap: 12px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); }
+  .status.success { display: block; background: rgba(63,185,80,0.1); border: 1px solid rgba(63,185,80,0.3); color: var(--success); }
+  .status.error { display: block; background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.3); color: var(--error); }
+  .status.success .url-result { margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .status.success a { color: var(--accent2); word-break: break-all; }
+  .url-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .btn-copy { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--accent2); font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 600; padding: 5px 10px; cursor: pointer; transition: all 0.15s; }
+  .btn-copy:hover { border-color: var(--accent); }
+  .btn-open { background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.4); border-radius: 6px; color: var(--accent2); font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 600; padding: 5px 10px; cursor: pointer; text-decoration: none; transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px; }
+  .btn-open:hover { background: rgba(88,166,255,0.25); }
+  .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── MISC ── */
+  .hint { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .hint a { color: var(--accent2); text-decoration: none; }
+  .hint a:hover { text-decoration: underline; }
+  hr { border: none; border-top: 1px solid var(--border); }
+  .info-box { font-size: 12px; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; line-height: 1.7; }
+  .info-box span { color: var(--accent2); font-weight: 600; }
+  .badge { display: inline-block; background: rgba(88,166,255,0.15); border: 1px solid rgba(88,166,255,0.3); color: var(--accent2); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 20px; margin-left: 6px; vertical-align: middle; }
+
+  /* ── HISTORY PANEL ── */
+  .history-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; }
+  .history-empty .history-empty-icon { font-size: 36px; margin-bottom: 12px; }
+  .history-list { display: flex; flex-direction: column; gap: 10px; }
+  .history-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; transition: border-color 0.15s; }
+  .history-item:hover { border-color: var(--accent); }
+  .history-item-header { display: flex; align-items: center; gap: 8px; }
+  .history-type-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
+  .history-type-badge.deploy { background: rgba(46,160,67,0.2); color: #3fb950; border: 1px solid rgba(46,160,67,0.3); }
+  .history-type-badge.update { background: rgba(88,166,255,0.15); color: var(--accent2); border: 1px solid rgba(88,166,255,0.3); }
+  .history-repo { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text); font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .history-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+  .history-url { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent2); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+  .history-url:hover { text-decoration: underline; }
+  .history-file { font-size: 11px; color: var(--muted); }
+  .history-actions { display: flex; gap: 6px; margin-top: 2px; }
+  .btn-history-copy { background: none; border: 1px solid var(--border); border-radius: 5px; color: var(--muted); font-size: 10px; font-family: 'Inter', sans-serif; font-weight: 600; padding: 3px 8px; cursor: pointer; transition: all 0.15s; }
+  .btn-history-copy:hover { border-color: var(--accent); color: var(--accent2); }
+  .history-clear-row { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+  .btn-clear-all { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); font-size: 11px; font-family: 'Inter', sans-serif; font-weight: 600; padding: 5px 10px; cursor: pointer; transition: all 0.15s; }
+  .btn-clear-all:hover { border-color: var(--error); color: var(--error); }
+  .history-count { font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- Hamburger -->
+<button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-title">Menu</div>
+  <button class="nav-item active" id="nav-deploy" onclick="switchTab('deploy'); closeSidebar()">
+    <span class="nav-icon">🚀</span> Deploy
+  </button>
+  <button class="nav-item" id="nav-update" onclick="switchTab('update'); closeSidebar()">
+    <span class="nav-icon">🔄</span> Update
+  </button>
+  <button class="nav-item" id="nav-history" onclick="switchTab('history'); closeSidebar()">
+    <span class="nav-icon">📋</span> History <span id="sidebar-history-count" style="margin-left:auto;background:rgba(88,166,255,0.15);color:var(--accent2);font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;display:none"></span>
+  </button>
+  <hr class="sidebar-sep">
+  <div style="font-size:11px;color:var(--muted);padding:0 8px;line-height:1.6;">
+    Deploy: buat repo baru + aktifkan Pages.<br>
+    Update: perbarui file di repo yang sudah ada.<br>
+    History: riwayat deploy &amp; update kamu.
+  </div>
+</div>
+
+<!-- Main -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🐙</div>
+    <span class="logo-text">GitHub Pages Deploy</span>
+  </div>
+  <p id="headerDesc">Deploy file HTML ke GitHub Pages — gratis, tanpa credits!</p>
+</header>
+
+<div class="card">
+
+  <!-- ══ DEPLOY PANEL ══ -->
+  <div class="panel active" id="panel-deploy">
+    <div class="field">
+      <label>GitHub Token</label>
+      <div class="token-wrap">
+        <input type="password" id="d-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+        <button class="toggle-eye" onclick="toggleEye('d-token')">👁</button>
+      </div>
+      <span class="hint">Buat di <a href="https://github.com/settings/tokens/new" target="_blank">GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)</a> — centang permission: <strong>repo</strong></span>
+    </div>
+    <div class="field">
+      <label>Nama Repository</label>
+      <input type="text" id="d-repoName" placeholder="nama-repo-kamu" oninput="sanitizeName(this)">
+      <span class="hint">Nama repo baru yang akan dibuat otomatis.</span>
+    </div>
+    <div class="info-box">
+      🌐 Setelah deploy, site kamu live di:<br>
+      <span>https://username.github.io/nama-repo</span><br>
+      Aktif dalam <span>1–3 menit</span> setelah deploy.
+    </div>
+    <hr>
+    <div class="field">
+      <label>File HTML</label>
+      <div id="d-uploadArea" class="upload-area">
+        <input type="file" id="d-htmlFile" accept=".html,.htm" onchange="onFileSelected(this,'d')">
+        <div class="upload-icon">📄</div>
+        <div class="upload-label">Klik atau seret file HTML ke sini</div>
+        <div class="upload-hint">File akan di-deploy sebagai index.html</div>
+      </div>
+      <div id="d-fileInfo" style="display:none" class="file-selected">
+        <span>📄</span>
+        <span class="fname" id="d-fileName"></span>
+        <button class="file-clear" onclick="clearFile('d')">✕</button>
+      </div>
+    </div>
+    <div id="d-statusLoading" class="status loading" style="display:none">
+      <div class="spinner"></div>
+      <span id="d-loadingMsg">Memproses...</span>
+    </div>
+    <div id="d-statusSuccess" class="status success" style="display:none">
+      <strong>✅ Deploy berhasil!</strong>
+      <div class="url-result">🌐 <a id="d-deployUrl" href="#" target="_blank"></a></div>
+      <div class="url-actions">
+        <button class="btn-copy" onclick="copyUrl('d-deployUrl')">📋 Copy URL</button>
+        <a class="btn-open" id="d-openUrl" href="#" target="_blank">🌐 Buka Site</a>
+      </div>
+      <div style="margin-top:8px;font-size:12px;color:#56d364;">Tunggu 1–3 menit agar site aktif, lalu buka URL-nya.</div>
+    </div>
+    <div id="d-statusError" class="status error" style="display:none">
+      <strong>❌ Deploy gagal</strong>
+      <div id="d-errorMsg" style="margin-top:6px;font-size:12px;opacity:0.85;"></div>
+    </div>
+    <button class="btn-deploy" id="d-deployBtn" onclick="doDeploy()">🚀 Deploy Sekarang</button>
+  </div>
+
+  <!-- ══ UPDATE PANEL ══ -->
+  <div class="panel" id="panel-update">
+    <div class="field">
+      <label>GitHub Token</label>
+      <div class="repo-load-row">
+        <div class="token-wrap" style="flex:1">
+          <input type="password" id="u-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+          <button class="toggle-eye" onclick="toggleEye('u-token')">👁</button>
+        </div>
+        <button class="btn-load" id="u-loadBtn" onclick="loadRepos()">Muat Repo</button>
+      </div>
+      <span class="hint">Token yang sama dipakai untuk mengambil daftar repo Pages kamu.</span>
+    </div>
+
+    <!-- Repo list -->
+    <div class="repo-list-wrap" id="u-repoSection" style="display:none">
+      <div class="repo-list-label">Pilih Repository</div>
+      <div class="repo-list" id="u-repoList"></div>
+    </div>
+
+    <!-- File upload (shown after repo selected) -->
+    <div id="u-fileSection" style="display:none">
+      <hr style="margin-bottom:22px">
+      <div class="field">
+        <label>File HTML Baru</label>
+        <div id="u-uploadArea" class="upload-area">
+          <input type="file" id="u-htmlFile" accept=".html,.htm" onchange="onFileSelected(this,'u')">
+          <div class="upload-icon">📄</div>
+          <div class="upload-label">Klik atau seret file HTML ke sini</div>
+          <div class="upload-hint">Akan menggantikan index.html yang ada — domain tetap sama</div>
+        </div>
+        <div id="u-fileInfo" style="display:none" class="file-selected">
+          <span>📄</span>
+          <span class="fname" id="u-fileName"></span>
+          <button class="file-clear" onclick="clearFile('u')">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="u-statusLoading" class="status loading" style="display:none">
+      <div class="spinner"></div>
+      <span id="u-loadingMsg">Memproses...</span>
+    </div>
+    <div id="u-statusSuccess" class="status success" style="display:none">
+      <strong>✅ Update berhasil!</strong>
+      <div class="url-result">🌐 <a id="u-deployUrl" href="#" target="_blank"></a></div>
+      <div class="url-actions">
+        <button class="btn-copy" onclick="copyUrl('u-deployUrl')">📋 Copy URL</button>
+        <a class="btn-open" id="u-openUrl" href="#" target="_blank">🌐 Buka Site</a>
+      </div>
+      <div style="margin-top:8px;font-size:12px;color:#56d364;">Perubahan aktif dalam 1–2 menit.</div>
+    </div>
+    <div id="u-statusError" class="status error" style="display:none">
+      <strong>❌ Update gagal</strong>
+      <div id="u-errorMsg" style="margin-top:6px;font-size:12px;opacity:0.85;"></div>
+    </div>
+
+    <button class="btn-update" id="u-updateBtn" onclick="doUpdate()" style="display:none">🔄 Update Sekarang</button>
+  </div>
+
+  <!-- ══ HISTORY PANEL ══ -->
+  <div class="panel" id="panel-history">
+    <div id="history-content"></div>
+  </div>
+</div>
+
+<script>
+  // ── State ──
+  let selectedFile = { d: null, u: null };
+  let selectedRepo = null; // { name, owner, pagesUrl }
+  let uUsername = null;
+
+  // Init
+  updateHistoryBadge();
+
+  // ── Sidebar ──
+  function toggleSidebar() {
+    const s = document.getElementById('sidebar');
+    const h = document.getElementById('hamburger');
+    const o = document.getElementById('overlay');
+    const isOpen = s.classList.contains('open');
+    if (isOpen) { s.classList.remove('open'); h.classList.remove('open'); o.classList.remove('show'); }
+    else { s.classList.add('open'); h.classList.add('open'); o.classList.add('show'); }
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('hamburger').classList.remove('open');
+    document.getElementById('overlay').classList.remove('show');
+  }
+
+  // ── Tab switch ──
+  function switchTab(tab) {
+    ['deploy','update','history'].forEach(t => {
+      document.getElementById('panel-'+t).classList.toggle('active', t===tab);
+      document.getElementById('nav-'+t).classList.toggle('active', t===tab);
+    });
+    const descs = { deploy: 'Deploy file HTML ke GitHub Pages — gratis, tanpa credits!', update: 'Update file di repo GitHub Pages yang sudah ada.', history: 'Riwayat deploy & update yang pernah kamu lakukan.' };
+    document.getElementById('headerDesc').textContent = descs[tab];
+    if (tab === 'history') renderHistory();
+  }
+
+  // ── Helpers ──
+  function toggleEye(id) { const i = document.getElementById(id); i.type = i.type==='password'?'text':'password'; }
+  function sanitizeName(el) { el.value = el.value.toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/--+/g,'-'); }
+
+  function onFileSelected(input, prefix) {
+    if (!input.files[0]) return;
+    selectedFile[prefix] = input.files[0];
+    document.getElementById(prefix+'-uploadArea').style.display = 'none';
+    document.getElementById(prefix+'-fileInfo').style.display = 'flex';
+    document.getElementById(prefix+'-fileName').textContent = selectedFile[prefix].name;
+  }
+  function clearFile(prefix) {
+    selectedFile[prefix] = null;
+    document.getElementById(prefix+'-htmlFile').value = '';
+    document.getElementById(prefix+'-uploadArea').style.display = 'block';
+    document.getElementById(prefix+'-fileInfo').style.display = 'none';
+  }
+
+  function showStatus(prefix, type) {
+    document.getElementById(prefix+'-statusLoading').style.display = type==='loading'?'flex':'none';
+    document.getElementById(prefix+'-statusSuccess').style.display = type==='success'?'block':'none';
+    document.getElementById(prefix+'-statusError').style.display = type==='error'?'block':'none';
+  }
+  function hideStatus(prefix) {
+    ['statusLoading','statusSuccess','statusError'].forEach(s => document.getElementById(prefix+'-'+s).style.display='none');
+  }
+  function setMsg(prefix, msg) { document.getElementById(prefix+'-loadingMsg').textContent = msg; }
+
+  function copyUrl(id) {
+    const url = document.getElementById(id).href;
+    navigator.clipboard.writeText(url).catch(()=>{});
+    const btn = event.target; btn.textContent = '✅ Copied!';
+    setTimeout(()=>{ btn.textContent = '📋 Copy URL'; }, 2000);
+  }
+
+  // ── History ──
+  function getHistory() {
+    try { return JSON.parse(localStorage.getItem('ghpages_history') || '[]'); } catch(e) { return []; }
+  }
+  function saveHistory(items) {
+    localStorage.setItem('ghpages_history', JSON.stringify(items));
+    updateHistoryBadge();
+  }
+  function addHistory(entry) {
+    const items = getHistory();
+    items.unshift({ ...entry, id: Date.now(), time: new Date().toISOString() });
+    if (items.length > 50) items.pop(); // max 50 entri
+    saveHistory(items);
+  }
+  function updateHistoryBadge() {
+    const items = getHistory();
+    const el = document.getElementById('sidebar-history-count');
+    if (items.length > 0) { el.textContent = items.length; el.style.display = 'inline'; }
+    else { el.style.display = 'none'; }
+  }
+  function formatTime(iso) {
+    const d = new Date(iso);
+    const pad = n => String(n).padStart(2,'0');
+    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  function renderHistory() {
+    const items = getHistory();
+    const el = document.getElementById('history-content');
+    if (items.length === 0) {
+      el.innerHTML = `<div class="history-empty"><div class="history-empty-icon">📭</div><div>Belum ada history.<br>Lakukan deploy atau update dulu!</div></div>`;
+      return;
+    }
+    el.innerHTML = `
+      <div class="history-clear-row">
+        <span class="history-count">${items.length} riwayat</span>
+        <button class="btn-clear-all" onclick="clearAllHistory()">🗑 Hapus Semua</button>
+      </div>
+      <div class="history-list" id="history-list"></div>`;
+    const list = document.getElementById('history-list');
+    items.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'history-item';
+      div.innerHTML = `
+        <div class="history-item-header">
+          <span class="history-type-badge ${item.type}">${item.type === 'deploy' ? '🚀 Deploy' : '🔄 Update'}</span>
+          <span class="history-repo">${item.repo}</span>
+          <span class="history-time">${formatTime(item.time)}</span>
+        </div>
+        <a class="history-url" href="${item.url}" target="_blank">${item.url}</a>
+        ${item.file ? `<div class="history-file">📄 ${item.file}</div>` : ''}
+        <div class="history-actions">
+          <button class="btn-history-copy" onclick="copyTextToClipboard('${item.url}', this)">📋 Copy URL</button>
+          <button class="btn-history-copy" onclick="deleteHistoryItem(${item.id})">✕ Hapus</button>
+        </div>`;
+      list.appendChild(div);
+    });
+  }
+  function clearAllHistory() {
+    if (!confirm('Hapus semua history?')) return;
+    saveHistory([]);
+    renderHistory();
+  }
+  function deleteHistoryItem(id) {
+    const items = getHistory().filter(i => i.id !== id);
+    saveHistory(items);
+    renderHistory();
+  }
+  function copyTextToClipboard(text, btn) {
+    navigator.clipboard.writeText(text).catch(()=>{});
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  }
+
+  // ── GitHub API ──
+  async function gh(path, method, body, token) {
+    const res = await fetch('https://api.github.com'+path, {
+      method, headers: {'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'},
+      body: body ? JSON.stringify(body) : undefined
+    });
+    return { ok: res.ok, status: res.status, data: await res.json() };
+  }
+
+  // ── Drag & drop for both panels ──
+  ['d','u'].forEach(p => {
+    const area = document.getElementById(p+'-uploadArea');
+    if (!area) return;
+    area.addEventListener('dragover', e=>{e.preventDefault();area.classList.add('dragover');});
+    area.addEventListener('dragleave', ()=>area.classList.remove('dragover'));
+    area.addEventListener('drop', e=>{
+      e.preventDefault(); area.classList.remove('dragover');
+      const f = e.dataTransfer.files[0];
+      if (f) { selectedFile[p]=f; area.style.display='none'; document.getElementById(p+'-fileInfo').style.display='flex'; document.getElementById(p+'-fileName').textContent=f.name; }
+    });
+  });
+
+  // ── File to Base64 (support file besar) ──
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        // result = "data:...;base64,XXXX" — ambil bagian setelah koma
+        resolve(reader.result.split(',')[1]);
+      };
+      reader.onerror = () => reject(new Error('Gagal baca file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ── DEPLOY (Git Data API — support file hingga ~50MB) ──
+  async function doDeploy() {
+    const token = document.getElementById('d-token').value.trim();
+    const repoName = document.getElementById('d-repoName').value.trim();
+    if (!token) return alert('Masukkan GitHub Token dulu!');
+    if (!repoName) return alert('Masukkan nama repository dulu!');
+    if (!selectedFile.d) return alert('Pilih file HTML dulu!');
+
+    const fileSizeMB = (selectedFile.d.size / 1024 / 1024).toFixed(2);
+    if (selectedFile.d.size > 50 * 1024 * 1024) return alert('File terlalu besar! Maksimal 50MB.');
+
+    const btn = document.getElementById('d-deployBtn');
+    btn.disabled = true; showStatus('d','loading');
+    try {
+      setMsg('d','Membaca file ('+fileSizeMB+' MB)...');
+      const b64 = await fileToBase64(selectedFile.d);
+
+      setMsg('d','Mengecek akun GitHub...');
+      const {ok:uOk,data:uData} = await gh('/user','GET',null,token);
+      if (!uOk) throw new Error('Token tidak valid: '+(uData.message||''));
+      const username = uData.login;
+
+      setMsg('d','Membuat repository...');
+      const {ok:rOk,status:rStatus,data:rData} = await gh('/user/repos','POST',{name:repoName,private:false,auto_init:false,description:'Deployed via GitHub Pages Deploy'},token);
+      if (!rOk && rStatus!==422) throw new Error('Gagal buat repo: '+(rData.message||''));
+
+      const owner = username;
+      const repo = repoName;
+
+      // Cek apakah branch main sudah ada
+      setMsg('d','Mengecek branch...');
+      const {ok:refOk,data:refData} = await gh('/repos/'+owner+'/'+repo+'/git/refs/heads/main','GET',null,token);
+      const branchExists = refOk && refData.object;
+
+      setMsg('d','Mengupload file ('+fileSizeMB+' MB)...');
+      // Step 1: Buat blob
+      const {ok:blobOk,data:blobData} = await gh('/repos/'+owner+'/'+repo+'/git/blobs','POST',{content:b64,encoding:'base64'},token);
+      if (!blobOk) throw new Error('Gagal buat blob: '+(blobData.message||''));
+      const blobSha = blobData.sha;
+
+      setMsg('d','Menyiapkan commit...');
+      // Step 2: Buat tree
+      const treeBody = {tree:[{path:'index.html',mode:'100644',type:'blob',sha:blobSha}]};
+      if (branchExists) treeBody.base_tree = refData.object.sha; // pakai tree dari commit terakhir
+      const {ok:treeOk,data:treeData} = await gh('/repos/'+owner+'/'+repo+'/git/trees','POST',treeBody,token);
+      if (!treeOk) throw new Error('Gagal buat tree: '+(treeData.message||''));
+
+      // Step 3: Buat commit
+      const commitBody = {message:'Deploy via web app',tree:treeData.sha};
+      if (branchExists) commitBody.parents = [refData.object.sha];
+      const {ok:commitOk,data:commitData} = await gh('/repos/'+owner+'/'+repo+'/git/commits','POST',commitBody,token);
+      if (!commitOk) throw new Error('Gagal buat commit: '+(commitData.message||''));
+
+      setMsg('d','Memperbarui branch main...');
+      // Step 4: Update atau buat ref
+      let refResult;
+      if (branchExists) {
+        refResult = await gh('/repos/'+owner+'/'+repo+'/git/refs/heads/main','PATCH',{sha:commitData.sha,force:true},token);
+      } else {
+        refResult = await gh('/repos/'+owner+'/'+repo+'/git/refs','POST',{ref:'refs/heads/main',sha:commitData.sha},token);
+      }
+      if (!refResult.ok) throw new Error('Gagal update branch: '+(refResult.data.message||''));
+
+      setMsg('d','Mengaktifkan GitHub Pages...');
+      await gh('/repos/'+owner+'/'+repo+'/pages','POST',{source:{branch:'main',path:'/'}},token);
+
+      const url = 'https://'+username+'.github.io/'+repoName;
+      document.getElementById('d-deployUrl').href = url;
+      document.getElementById('d-deployUrl').textContent = url;
+      document.getElementById('d-openUrl').href = url;
+      addHistory({ type: 'deploy', repo: repoName, url, file: selectedFile.d ? selectedFile.d.name : '' });
+      showStatus('d','success');
+    } catch(err) {
+      document.getElementById('d-errorMsg').textContent = err.message;
+      showStatus('d','error');
+    }
+    btn.disabled = false;
+  }
+
+  // ── LOAD REPOS (Update panel) ──
+  async function loadRepos() {
+    const token = document.getElementById('u-token').value.trim();
+    if (!token) return alert('Masukkan GitHub Token dulu!');
+    const btn = document.getElementById('u-loadBtn');
+    btn.disabled = true; btn.textContent = '⏳ Memuat...';
+    hideStatus('u');
+    document.getElementById('u-repoSection').style.display = 'none';
+    document.getElementById('u-fileSection').style.display = 'none';
+    document.getElementById('u-updateBtn').style.display = 'none';
+    selectedRepo = null;
+
+    try {
+      // Get user info
+      const {ok:uOk,data:uData} = await gh('/user','GET',null,token);
+      if (!uOk) throw new Error('Token tidak valid: '+(uData.message||''));
+      uUsername = uData.login;
+
+      // Get all repos (paginate up to 3 pages = 300 repos)
+      let allRepos = [];
+      for (let page = 1; page <= 3; page++) {
+        const {ok,data} = await gh('/user/repos?per_page=100&page='+page,'GET',null,token);
+        if (!ok) break;
+        allRepos = allRepos.concat(data);
+        if (data.length < 100) break;
+      }
+
+      // Check Pages status in parallel
+      const checks = allRepos.map(async repo => {
+        const {ok,data} = await gh('/repos/'+repo.full_name+'/pages','GET',null,token);
+        if (ok && data.url) return { name: repo.name, owner: repo.owner.login, pagesUrl: data.html_url || ('https://'+repo.owner.login+'.github.io/'+repo.name) };
+        return null;
+      });
+      const results = (await Promise.all(checks)).filter(Boolean);
+
+      // Render list
+      const listEl = document.getElementById('u-repoList');
+      listEl.innerHTML = '';
+      if (results.length === 0) {
+        listEl.innerHTML = '<div class="repo-empty">Tidak ada repo dengan GitHub Pages aktif.<br>Deploy dulu pakai tab <strong>Deploy</strong>.</div>';
+      } else {
+        results.forEach(repo => {
+          const item = document.createElement('div');
+          item.className = 'repo-item';
+          item.innerHTML = `<div class="repo-check"></div><div><div class="repo-item-name">${repo.name}</div><div class="repo-item-url">${repo.pagesUrl}</div></div>`;
+          item.onclick = () => selectRepo(item, repo);
+          listEl.appendChild(item);
+        });
+      }
+      document.getElementById('u-repoSection').style.display = 'flex';
+    } catch(err) {
+      document.getElementById('u-errorMsg').textContent = err.message;
+      showStatus('u','error');
+    }
+    btn.disabled = false; btn.textContent = 'Muat Repo';
+  }
+
+  function selectRepo(el, repo) {
+    document.querySelectorAll('.repo-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    el.querySelector('.repo-check').textContent = '✓';
+    selectedRepo = repo;
+    document.getElementById('u-fileSection').style.display = 'block';
+    document.getElementById('u-updateBtn').style.display = 'flex';
+    hideStatus('u');
+    clearFile('u');
+  }
+
+  // ── UPDATE (Git Data API — support file hingga ~50MB) ──
+  async function doUpdate() {
+    const token = document.getElementById('u-token').value.trim();
+    if (!token) return alert('Masukkan GitHub Token dulu!');
+    if (!selectedRepo) return alert('Pilih repository dulu!');
+    if (!selectedFile.u) return alert('Pilih file HTML baru dulu!');
+
+    const fileSizeMB = (selectedFile.u.size / 1024 / 1024).toFixed(2);
+    if (selectedFile.u.size > 50 * 1024 * 1024) return alert('File terlalu besar! Maksimal 50MB.');
+
+    const btn = document.getElementById('u-updateBtn');
+    btn.disabled = true; showStatus('u','loading');
+    try {
+      setMsg('u','Membaca file ('+fileSizeMB+' MB)...');
+      const b64 = await fileToBase64(selectedFile.u);
+
+      const owner = selectedRepo.owner;
+      const repo = selectedRepo.name;
+
+      setMsg('u','Mengambil info branch...');
+      const {ok:refOk,data:refData} = await gh('/repos/'+owner+'/'+repo+'/git/refs/heads/main','GET',null,token);
+      if (!refOk) throw new Error('Gagal ambil branch main: '+(refData.message||''));
+      const latestCommitSha = refData.object.sha;
+
+      setMsg('u','Mengupload file ('+fileSizeMB+' MB)...');
+      // Step 1: Buat blob
+      const {ok:blobOk,data:blobData} = await gh('/repos/'+owner+'/'+repo+'/git/blobs','POST',{content:b64,encoding:'base64'},token);
+      if (!blobOk) throw new Error('Gagal buat blob: '+(blobData.message||''));
+
+      setMsg('u','Menyiapkan commit...');
+      // Step 2: Buat tree
+      const {ok:treeOk,data:treeData} = await gh('/repos/'+owner+'/'+repo+'/git/trees','POST',{base_tree:latestCommitSha,tree:[{path:'index.html',mode:'100644',type:'blob',sha:blobData.sha}]},token);
+      if (!treeOk) throw new Error('Gagal buat tree: '+(treeData.message||''));
+
+      // Step 3: Buat commit
+      const {ok:commitOk,data:commitData} = await gh('/repos/'+owner+'/'+repo+'/git/commits','POST',{message:'Update via web app',tree:treeData.sha,parents:[latestCommitSha]},token);
+      if (!commitOk) throw new Error('Gagal buat commit: '+(commitData.message||''));
+
+      setMsg('u','Memperbarui branch main...');
+      // Step 4: Update ref
+      const {ok:patchOk,data:patchData} = await gh('/repos/'+owner+'/'+repo+'/git/refs/heads/main','PATCH',{sha:commitData.sha,force:true},token);
+      if (!patchOk) throw new Error('Gagal update branch: '+(patchData.message||''));
+
+      const url = selectedRepo.pagesUrl;
+      document.getElementById('u-deployUrl').href = url;
+      document.getElementById('u-deployUrl').textContent = url;
+      document.getElementById('u-openUrl').href = url;
+      addHistory({ type: 'update', repo: selectedRepo.name, url, file: selectedFile.u ? selectedFile.u.name : '' });
+      showStatus('u','success');
+    } catch(err) {
+      document.getElementById('u-errorMsg').textContent = err.message;
+      showStatus('u','error');
+    }
+    btn.disabled = false;
+  }
+</script>
+</body>
+</html>
