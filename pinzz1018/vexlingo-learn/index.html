@@ -2903,6 +2903,20 @@
       <button class="btn-admin danger" id="btn-admin-toggle-maintenance" onclick="adminToggleMaintenance()">Aktifkan</button>
     </div>
 
+    <!-- User Management Section -->
+    <div class="admin-msgs-section" style="margin-top:22px;">
+      <div class="admin-msgs-header">
+        <span class="admin-msgs-title">&#x1F465; Manajemen User</span>
+        <button class="btn-admin" style="padding:6px 12px;font-size:11px;" onclick="adminLoadUsers()">Refresh</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input id="admin-user-search" type="text" placeholder="Cari email user..." style="flex:1;padding:9px 12px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;color:#F0EEFF;font-size:12px;outline:none;" oninput="adminFilterUsers()" />
+      </div>
+      <div id="admin-users-list" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;">
+        <div style="font-size:12px;color:#8B7FA8;text-align:center;padding:12px;">Klik Refresh untuk memuat user.</div>
+      </div>
+    </div>
+
     <div class="admin-msgs-section">
       <div class="admin-msgs-header">
         <span class="admin-msgs-title">Pesan User <span id="admin-msgs-count" class="admin-msgs-badge" style="display:none;">0</span></span>
@@ -3004,8 +3018,11 @@
       <!-- Panel: Beli -->
       <div id="pro-panel-bayar" style="display:none;">
         <div style="background:rgba(251,191,36,.08);border:1.5px solid rgba(251,191,36,.25);border-radius:14px;padding:16px;margin-bottom:14px;text-align:center;">
-          <div style="font-size:28px;font-weight:900;color:#fbbf24;font-family:'Orbitron',monospace;">Rp 10.000</div>
-          <div style="font-size:11px;color:#8B7FA8;margin-top:4px;">Sekali bayar, Pro selamanya &#x2728;</div>
+          <div style="font-size:11px;color:#8B7FA8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">&#x1F525; Harga Promo</div>
+          <div style="font-size:13px;color:#8B7FA8;text-decoration:line-through;margin-bottom:2px;">Rp 15.000</div>
+          <div style="font-size:30px;font-weight:900;color:#fbbf24;font-family:'Orbitron',monospace;line-height:1.1;">Rp 10.000</div>
+          <div style="display:inline-block;background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);border-radius:20px;padding:2px 10px;font-size:10px;color:#fbbf24;font-weight:700;margin-top:6px;">HEMAT 33%</div>
+          <div style="font-size:11px;color:#8B7FA8;margin-top:6px;">Sekali bayar, Pro selamanya &#x2728;</div>
         </div>
         <div style="font-size:12px;color:#8B7FA8;margin-bottom:14px;line-height:1.8;background:rgba(255,255,255,.03);border-radius:10px;padding:12px;">
           <b style="color:#F0EEFF;">Cara beli:</b><br>
@@ -3015,7 +3032,7 @@
           4. Kirim ke Telegram <b style="color:#fbbf24;">@pinzz1018</b> + tulis email akun VexLingo kamu<br>
           5. Pro aktif dalam maks <b style="color:#F0EEFF;">1x24 jam</b>
         </div>
-        <a href="https://trakteer.id/alfin" target="_blank" rel="noopener" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border:none;border-radius:12px;color:#1a1a2e;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box;">&#x1F4B3; Bayar Sekarang &#x2014; Rp 10.000</a>
+        <a href="https://trakteer.id/vexlingo-pinzz" target="_blank" rel="noopener" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border:none;border-radius:12px;color:#1a1a2e;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box;">&#x1F4B3; Bayar Sekarang &#x2014; Rp 10.000</a>
         <a href="https://t.me/pinzz1018" target="_blank" rel="noopener" style="display:block;width:100%;padding:11px;background:rgba(37,99,235,.15);border:1.5px solid rgba(37,99,235,.4);border-radius:12px;color:#93C5FD;font-size:13px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box;">&#x2708; Konfirmasi via Telegram @pinzz1018</a>
       </div>
 
@@ -3125,7 +3142,9 @@
     deleteDoc,
     updateDoc,
     query,
+    where,
     orderBy,
+    limit,
     serverTimestamp,
     Timestamp
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -3155,7 +3174,7 @@
     signInWithRedirect,
     getRedirectResult
   };
-  window._dbFns = { collection, getDocs, doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, query, orderBy, serverTimestamp, Timestamp };
+  window._dbFns = { collection, getDocs, doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, query, where, orderBy, limit, serverTimestamp, Timestamp };
 
   // Auto-login: jika user session masih aktif, langsung skip auth card
   onAuthStateChanged(auth, user => {
@@ -4886,6 +4905,72 @@
     vexSpeak(_userCache.isPro ? 'unlock' : 'welcome');
   }
   window.adminTogglePro = adminTogglePro;
+
+  /* ── Admin: User Management ── */
+  let _adminAllUsers = [];
+
+  async function adminLoadUsers() {
+    if (!_isAdminSession) return;
+    const listEl = document.getElementById('admin-users-list');
+    if (!listEl) return;
+    listEl.innerHTML = '<div style="font-size:12px;color:#8B7FA8;text-align:center;padding:12px;">Memuat...</div>';
+    try {
+      const { collection, getDocs, orderBy, query } = window._dbFns;
+      const q = query(collection(window._db, 'users'), orderBy('email'));
+      const snap = await getDocs(q);
+      _adminAllUsers = [];
+      snap.forEach(d => {
+        const data = d.data();
+        _adminAllUsers.push({ uid: d.id, email: data.email || '(no email)', isPro: !!data.isPro, displayName: data.displayName || '' });
+      });
+      adminRenderUsers(_adminAllUsers);
+    } catch(e) {
+      listEl.innerHTML = '<div style="font-size:12px;color:#F87171;text-align:center;padding:12px;">Gagal memuat: ' + e.message + '</div>';
+    }
+  }
+  window.adminLoadUsers = adminLoadUsers;
+
+  function adminFilterUsers() {
+    const q = (document.getElementById('admin-user-search')?.value || '').toLowerCase();
+    const filtered = q ? _adminAllUsers.filter(u => u.email.toLowerCase().includes(q)) : _adminAllUsers;
+    adminRenderUsers(filtered);
+  }
+  window.adminFilterUsers = adminFilterUsers;
+
+  function adminRenderUsers(users) {
+    const listEl = document.getElementById('admin-users-list');
+    if (!listEl) return;
+    if (!users.length) {
+      listEl.innerHTML = '<div style="font-size:12px;color:#8B7FA8;text-align:center;padding:12px;">Tidak ada user ditemukan.</div>';
+      return;
+    }
+    listEl.innerHTML = users.map(u => `
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:600;color:#F0EEFF;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.email}</div>
+          ${u.displayName ? `<div style="font-size:10px;color:#8B7FA8;margin-top:1px;">${u.displayName}</div>` : ''}
+        </div>
+        <button onclick="adminSetUserPro('${u.uid}', ${!u.isPro})" style="flex-shrink:0;padding:6px 12px;border-radius:8px;border:1.5px solid ${u.isPro ? 'rgba(45,212,191,.4)' : 'rgba(251,191,36,.4)'};background:${u.isPro ? 'rgba(45,212,191,.12)' : 'rgba(251,191,36,.12)'};color:${u.isPro ? '#2DD4BF' : '#fbbf24'};font-size:11px;font-weight:700;cursor:pointer;">
+          ${u.isPro ? '&#x2714; Pro' : 'Aktifkan Pro'}
+        </button>
+      </div>
+    `).join('');
+  }
+  window.adminRenderUsers = adminRenderUsers;
+
+  async function adminSetUserPro(uid, makeProVal) {
+    if (!_isAdminSession) return;
+    try {
+      const { doc, updateDoc } = window._dbFns;
+      await updateDoc(doc(window._db, 'users', uid), { isPro: makeProVal });
+      const user = _adminAllUsers.find(u => u.uid === uid);
+      if (user) user.isPro = makeProVal;
+      adminFilterUsers();
+    } catch(e) {
+      alert('Gagal update: ' + e.message);
+    }
+  }
+  window.adminSetUserPro = adminSetUserPro;
 
   async function adminAddXp() {
     if (!_isAdminSession) return;
