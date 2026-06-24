@@ -5782,7 +5782,10 @@
 
     document.getElementById('profile-stat-xp').textContent = _userCache.xp || 0;
     document.getElementById('profile-stat-streak').textContent = _userCache.streakCount || 0;
-    document.getElementById('profile-stat-lessons').textContent = Object.keys(_userCache.completedLessons || {}).length;
+    // Count completed lessons: use _userCache (all languages) but deduplicate properly
+    const allCompleted = _userCache.completedLessons || {};
+    const lessonCount = Object.keys(allCompleted).filter(k => allCompleted[k]).length;
+    document.getElementById('profile-stat-lessons').textContent = lessonCount;
     document.getElementById('profile-stat-badges').textContent = Object.keys(_userCache.badges || {}).length;
 
     // Pro Stats
@@ -7032,7 +7035,8 @@
         const fsKey = `${selectedLanguage}:${key}`;
         _userCache.completedLessons = _userCache.completedLessons || {};
         _userCache.completedLessons[fsKey] = true;
-        await saveUserData({ completedLessons: _userCache.completedLessons });
+        // Use dot notation to avoid overwriting other completed lessons in Firestore
+        await saveUserData({ [`completedLessons.${fsKey}`]: true });
       }
 
       // Interstitial ad every 2 lessons this session (free users only)
