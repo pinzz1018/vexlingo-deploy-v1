@@ -3024,60 +3024,61 @@
       <div style="text-align:center;margin-bottom:18px;">
         <div style="margin-bottom:8px;"><svg width="44" height="44" viewBox="0 0 24 24" fill="none"><path d="M3 18h18l-1.4-9.3-4.1 4.2L12 6l-3.5 6.9-4.1-4.2L3 18z" fill="#fbbf24" stroke="#fbbf24" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/><rect x="3" y="18" width="18" height="2.5" rx="1" fill="#fbbf24"/><circle cx="3" cy="7" r="1.6" fill="#fbbf24"/><circle cx="12" cy="4.5" r="1.6" fill="#fbbf24"/><circle cx="21" cy="7" r="1.6" fill="#fbbf24"/></svg></div>
         <h2 style="font-size:20px;font-weight:700;color:#F0EEFF;margin-bottom:4px;">VexLingo Pro</h2>
-        <p style="font-size:12.5px;color:#8B7FA8;line-height:1.5;">Bebas iklan &amp; nyawa unlimited &#x2665;&#x221e;</p>
+        <p style="font-size:12.5px;color:#8B7FA8;line-height:1.5;" data-i18n="pro_modal_subtitle">Bebas iklan &amp; nyawa unlimited &#x2665;&#x221e;</p>
       </div>
 
       <!-- Tab switcher -->
       <div style="display:flex;gap:8px;margin-bottom:18px;">
-        <button id="pro-tab-challenge" onclick="switchProTab('challenge')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid rgba(251,191,36,.5);background:rgba(251,191,36,.15);color:#fbbf24;font-size:12px;font-weight:700;cursor:pointer;">&#x1F3C6; Challenge Gratis</button>
-        <button id="pro-tab-bayar" onclick="switchProTab('bayar')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#8B7FA8;font-size:12px;font-weight:700;cursor:pointer;">&#x1F4B3; Beli Langsung</button>
+        <button id="pro-tab-challenge" onclick="switchProTab('challenge')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid rgba(251,191,36,.5);background:rgba(251,191,36,.15);color:#fbbf24;font-size:12px;font-weight:700;cursor:pointer;" data-i18n="pro_tab_challenge">🏆 Challenge Gratis</button>
+        <button id="pro-tab-bayar" onclick="switchProTab('bayar')" style="flex:1;padding:9px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#8B7FA8;font-size:12px;font-weight:700;cursor:pointer;" data-i18n="pro_tab_buy">💳 Beli Langsung</button>
       </div>
 
       <!-- Panel: Challenge -->
       <div id="pro-panel-challenge">
         <div id="pro-challenges-list"></div>
-        <p id="pro-claim-hint" style="font-size:11px;color:#8B7FA8;text-align:center;margin:8px 0 14px;">Progress otomatis terupdate tiap kamu selesai lesson.</p>
-        <button id="pro-claim-btn" onclick="claimProStatus()" disabled style="width:100%;padding:13px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border:none;border-radius:12px;color:#1a1a2e;font-size:14px;font-weight:700;cursor:not-allowed;opacity:.5;margin-bottom:10px;">Selesaikan semua challenge dulu</button>
+        <p id="pro-claim-hint" style="font-size:11px;color:#8B7FA8;text-align:center;margin:8px 0 14px;" data-i18n="pro_claim_hint">Progress otomatis terupdate tiap kamu selesai lesson.</p>
+        <button id="pro-claim-btn" onclick="claimProStatus()" disabled style="width:100%;padding:13px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border:none;border-radius:12px;color:#1a1a2e;font-size:14px;font-weight:700;cursor:not-allowed;opacity:.5;margin-bottom:10px;" data-i18n="pro_claim_btn_locked">Selesaikan semua challenge dulu</button>
       </div>
 
       <!-- Panel: Beli -->
       <div id="pro-panel-bayar" style="display:none;">
         <div style="background:rgba(251,191,36,.08);border:1.5px solid rgba(251,191,36,.25);border-radius:14px;padding:16px;margin-bottom:14px;text-align:center;">
-          <div style="font-size:11px;color:#8B7FA8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">&#x1F525; Harga Promo</div>
+          <div style="font-size:11px;color:#8B7FA8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;" data-i18n="pro_price_label">🔥 Harga Promo</div>
           <div style="font-size:13px;color:#8B7FA8;text-decoration:line-through;margin-bottom:2px;">Rp 15.000</div>
           <div style="font-size:30px;font-weight:900;color:#fbbf24;font-family:'Orbitron',monospace;line-height:1.1;">Rp 10.000</div>
-          <div style="display:inline-block;background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);border-radius:20px;padding:2px 10px;font-size:10px;color:#fbbf24;font-weight:700;margin-top:6px;">HEMAT 33%</div>
-          <div style="font-size:11px;color:#8B7FA8;margin-top:6px;">Sekali bayar, Pro selamanya &#x2728;</div>
+          <div style="display:inline-block;background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);border-radius:20px;padding:2px 10px;font-size:10px;color:#fbbf24;font-weight:700;margin-top:6px;" data-i18n="pro_price_save">HEMAT 33%</div>
+          <div style="font-size:11px;color:#8B7FA8;margin-top:6px;" data-i18n="pro_price_lifetime">Sekali bayar, Pro selamanya ✨</div>
         </div>
-        <div style="font-size:12px;color:#8B7FA8;margin-bottom:14px;line-height:1.8;background:rgba(255,255,255,.03);border-radius:10px;padding:12px;">
-          <b style="color:#F0EEFF;">Cara beli:</b><br>
-          1. Klik tombol bayar di bawah<br>
-          2. Transfer <b style="color:#fbbf24;">Rp 10.000</b> via QRIS / bank<br>
-          3. Screenshot bukti bayar<br>
-          4. Kirim ke Telegram <b style="color:#fbbf24;">@pinzz1018</b> + tulis email akun VexLingo kamu<br>
-          5. Pro aktif dalam maks <b style="color:#F0EEFF;">1x24 jam</b>
+        <div id="pro-how-to-buy" style="font-size:12px;color:#8B7FA8;margin-bottom:14px;line-height:1.8;background:rgba(255,255,255,.03);border-radius:10px;padding:12px;">
+          <b style="color:#F0EEFF;" data-i18n="pro_how_title">Cara beli:</b><br>
+          <span data-i18n="pro_how_1">1. Klik tombol bayar di bawah</span><br>
+          <span data-i18n="pro_how_2">2. Transfer <b style="color:#fbbf24;">Rp 10.000</b> via QRIS / bank</span><br>
+          <span data-i18n="pro_how_3">3. Screenshot bukti bayar</span><br>
+          <span data-i18n="pro_how_4">4. Kirim ke Telegram <b style="color:#fbbf24;">@pinzz1018</b> + tulis email akun VexLingo kamu</span><br>
+          <span data-i18n="pro_how_5">5. Pro aktif dalam maks <b style="color:#F0EEFF;">1×24 jam</b></span>
         </div>
-        <a href="https://trakteer.id/vexlingo-pinzz" target="_blank" rel="noopener" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border:none;border-radius:12px;color:#1a1a2e;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box;">&#x1F4B3; Bayar Sekarang &#x2014; Rp 10.000</a>
-        <a href="https://t.me/pinzz1018" target="_blank" rel="noopener" style="display:block;width:100%;padding:11px;background:rgba(37,99,235,.15);border:1.5px solid rgba(37,99,235,.4);border-radius:12px;color:#93C5FD;font-size:13px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box;">&#x2708; Konfirmasi via Telegram @pinzz1018</a>
+        <a href="https://trakteer.id/vexlingo-pinzz" target="_blank" rel="noopener" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border:none;border-radius:12px;color:#1a1a2e;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box;" data-i18n="pro_pay_btn">💳 Bayar Sekarang — Rp 10.000</a>
+        <a href="https://t.me/pinzz1018" target="_blank" rel="noopener" style="display:block;width:100%;padding:11px;background:rgba(37,99,235,.15);border:1.5px solid rgba(37,99,235,.4);border-radius:12px;color:#93C5FD;font-size:13px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box;" data-i18n="pro_telegram_btn">✈ Konfirmasi via Telegram @pinzz1018</a>
 
         <!-- ── Redeem Code Section ── -->
         <div id="redeem-section" style="margin-top:4px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
             <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
-            <span style="font-size:10px;color:#8B7FA8;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;">Sudah transfer?</span>
+            <span style="font-size:10px;color:#8B7FA8;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;" data-i18n="pro_already_paid">Sudah transfer?</span>
             <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
           </div>
           <div style="background:rgba(251,191,36,.05);border:1.5px solid rgba(251,191,36,.2);border-radius:14px;padding:14px;">
-            <div style="font-size:11px;color:#fbbf24;font-weight:700;letter-spacing:.5px;margin-bottom:2px;">⚡ Masukkan Kode Aktivasi</div>
-            <div style="font-size:11px;color:#8B7FA8;margin-bottom:12px;line-height:1.5;">Kode dikirim ke Telegram kamu setelah transfer dikonfirmasi.</div>
+            <div style="font-size:11px;color:#fbbf24;font-weight:700;letter-spacing:.5px;margin-bottom:2px;" data-i18n="pro_redeem_title">⚡ Masukkan Kode Aktivasi</div>
+            <div style="font-size:11px;color:#8B7FA8;margin-bottom:12px;line-height:1.5;" data-i18n="pro_redeem_desc">Kode dikirim ke Telegram kamu setelah transfer dikonfirmasi.</div>
             <div style="display:flex;gap:8px;align-items:stretch;">
               <input
                 id="redeem-code-input"
                 type="text"
                 placeholder="Masukkan kode aktivasi kamu"
+                data-i18n-attr="placeholder:pro_redeem_placeholder"
                 maxlength="20"
-                oninput="this.value = this.value.toUpperCase()"
-                style="flex:1;padding:11px 13px;background:rgba(255,255,255,.06);border:1.5px solid rgba(251,191,36,.3);border-radius:10px;color:#F0EEFF;font-size:13px;font-weight:600;font-family:'Orbitron',monospace;letter-spacing:1px;outline:none;transition:border-color .2s;"
+                oninput="this.value = this.value.toUpperCase(); this.style.fontFamily = this.value ? '\'Orbitron\',monospace' : '\'Inter\',system-ui,sans-serif'; this.style.letterSpacing = this.value ? '1px' : '.3px';"
+                style="flex:1;padding:11px 13px;background:rgba(255,255,255,.06);border:1.5px solid rgba(251,191,36,.3);border-radius:10px;color:#F0EEFF;font-size:12px;font-weight:600;font-family:'Inter',system-ui,sans-serif;letter-spacing:.3px;outline:none;transition:border-color .2s;"
                 onfocus="this.style.borderColor='rgba(251,191,36,.7)'"
                 onblur="this.style.borderColor='rgba(251,191,36,.3)'"
                 onkeydown="if(event.key==='Enter')redeemProCode()"
@@ -3086,6 +3087,7 @@
                 onclick="redeemProCode()"
                 id="redeem-submit-btn"
                 style="padding:11px 16px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border:none;border-radius:10px;color:#1a1a2e;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;transition:opacity .2s;flex-shrink:0;"
+                data-i18n="pro_redeem_btn"
               >Aktifkan</button>
             </div>
             <div id="redeem-msg" style="display:none;margin-top:10px;font-size:12px;border-radius:8px;padding:8px 12px;"></div>
@@ -3093,7 +3095,7 @@
         </div>
       </div>
 
-      <button onclick="closeProModal()" style="width:100%;padding:12px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;color:#8B7FA8;font-size:13px;font-weight:500;cursor:pointer;">Tutup</button>
+      <button onclick="closeProModal()" style="width:100%;padding:12px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;color:#8B7FA8;font-size:13px;font-weight:500;cursor:pointer;" data-i18n="pro_close_btn">Tutup</button>
     </div>
   </div>
 
@@ -3633,6 +3635,37 @@
 
       // Misc toasts
       toast_need_api_key: 'Set your Groq API Key in Settings first!',
+
+      // Pro Modal
+      pro_modal_subtitle: 'Ad-free & unlimited hearts ♥∞',
+      pro_tab_challenge: '🏆 Free Challenge',
+      pro_tab_buy: '💳 Buy Directly',
+      pro_claim_hint: 'Progress updates automatically every time you finish a lesson.',
+      pro_claim_btn_locked: 'Complete all challenges first',
+      pro_claim_btn_ready: 'Claim VexLingo Pro!',
+      pro_price_label: '🔥 Promo Price',
+      pro_price_save: 'SAVE 33%',
+      pro_price_lifetime: 'One-time payment, Pro forever ✨',
+      pro_how_title: 'How to buy:',
+      pro_how_1: '1. Click the payment button below',
+      pro_how_2: '2. Transfer <b style="color:#fbbf24;">Rp 10.000</b> via QRIS / bank',
+      pro_how_3: '3. Screenshot your payment proof',
+      pro_how_4: '4. Send to Telegram <b style="color:#fbbf24;">@pinzz1018</b> + include your VexLingo account email',
+      pro_how_5: '5. Pro activates within max <b style="color:#F0EEFF;">1×24 hours</b>',
+      pro_pay_btn: '💳 Pay Now — Rp 10.000',
+      pro_telegram_btn: '✈ Confirm via Telegram @pinzz1018',
+      pro_already_paid: 'ALREADY TRANSFERRED?',
+      pro_redeem_title: '⚡ Enter Activation Code',
+      pro_redeem_desc: 'Code will be sent to your Telegram after transfer is confirmed.',
+      pro_redeem_placeholder: 'Enter your activation code',
+      pro_redeem_btn: 'Activate',
+      pro_close_btn: 'Close',
+      pro_challenge_streak3_name: '3-Day Streak',
+      pro_challenge_streak3_desc: 'Study 3 days in a row',
+      pro_challenge_perfect5_name: '5 Perfect Lessons',
+      pro_challenge_perfect5_desc: 'Complete 5 lessons with all correct answers',
+      pro_challenge_correct30_name: '30 Correct Answers',
+      pro_challenge_correct30_desc: 'Answer 30 questions correctly (total)',
     },
     id: {
       choose_language_title: 'Pilih Bahasa',
@@ -3805,6 +3838,37 @@
       chapter_level_expert: 'Expert',
 
       toast_need_api_key: 'Set Groq API Key dulu di Settings!',
+
+      // Pro Modal
+      pro_modal_subtitle: 'Bebas iklan & nyawa unlimited ♥∞',
+      pro_tab_challenge: '🏆 Challenge Gratis',
+      pro_tab_buy: '💳 Beli Langsung',
+      pro_claim_hint: 'Progress otomatis terupdate tiap kamu selesai lesson.',
+      pro_claim_btn_locked: 'Selesaikan semua challenge dulu',
+      pro_claim_btn_ready: 'Klaim VexLingo Pro!',
+      pro_price_label: '🔥 Harga Promo',
+      pro_price_save: 'HEMAT 33%',
+      pro_price_lifetime: 'Sekali bayar, Pro selamanya ✨',
+      pro_how_title: 'Cara beli:',
+      pro_how_1: '1. Klik tombol bayar di bawah',
+      pro_how_2: '2. Transfer <b style="color:#fbbf24;">Rp 10.000</b> via QRIS / bank',
+      pro_how_3: '3. Screenshot bukti bayar',
+      pro_how_4: '4. Kirim ke Telegram <b style="color:#fbbf24;">@pinzz1018</b> + tulis email akun VexLingo kamu',
+      pro_how_5: '5. Pro aktif dalam maks <b style="color:#F0EEFF;">1×24 jam</b>',
+      pro_pay_btn: '💳 Bayar Sekarang — Rp 10.000',
+      pro_telegram_btn: '✈ Konfirmasi via Telegram @pinzz1018',
+      pro_already_paid: 'SUDAH TRANSFER?',
+      pro_redeem_title: '⚡ Masukkan Kode Aktivasi',
+      pro_redeem_desc: 'Kode dikirim ke Telegram kamu setelah transfer dikonfirmasi.',
+      pro_redeem_placeholder: 'Masukkan kode aktivasi kamu',
+      pro_redeem_btn: 'Aktifkan',
+      pro_close_btn: 'Tutup',
+      pro_challenge_streak3_name: 'Streak 3 Hari',
+      pro_challenge_streak3_desc: 'Belajar 3 hari berturut-turut',
+      pro_challenge_perfect5_name: '5 Lesson Sempurna',
+      pro_challenge_perfect5_desc: 'Selesaikan 5 lesson dengan semua jawaban benar',
+      pro_challenge_correct30_name: '30 Jawaban Benar',
+      pro_challenge_correct30_desc: 'Jawab 30 soal dengan benar (total)',
     },
   };
 
@@ -6293,24 +6357,24 @@
     {
       id: 'pro_streak3',
       icon: svgFire(18),
-      name: 'Streak 3 Hari',
-      desc: 'Belajar 3 hari berturut-turut',
+      get name() { return t('pro_challenge_streak3_name'); },
+      get desc() { return t('pro_challenge_streak3_desc'); },
       target: 3,
       progress: c => Math.min(c.streakCount || 0, 3),
     },
     {
       id: 'pro_perfect5',
       icon: svgDiamond(18),
-      name: '5 Lesson Sempurna',
-      desc: 'Selesaikan 5 lesson dengan semua jawaban benar',
+      get name() { return t('pro_challenge_perfect5_name'); },
+      get desc() { return t('pro_challenge_perfect5_desc'); },
       target: 5,
       progress: c => Math.min(c.perfectLessonCount || 0, 5),
     },
     {
       id: 'pro_correct30',
       icon: '🎯',
-      name: '30 Jawaban Benar',
-      desc: 'Jawab 30 soal dengan benar (total)',
+      get name() { return t('pro_challenge_correct30_name'); },
+      get desc() { return t('pro_challenge_correct30_desc'); },
       target: 30,
       progress: c => Math.min(c.totalCorrect || 0, 30),
     },
@@ -6393,7 +6457,7 @@
       claimBtn.disabled = !allDone;
       claimBtn.style.opacity = allDone ? '1' : '.5';
       claimBtn.style.cursor = allDone ? 'pointer' : 'not-allowed';
-      claimBtn.innerHTML = allDone ? `${svgCrown(15)} Klaim VexLingo Pro!` : 'Selesaikan semua challenge dulu';
+      claimBtn.innerHTML = allDone ? `${svgCrown(15)} ${t('pro_claim_btn_ready')}` : t('pro_claim_btn_locked');
     }
     if (hint) hint.style.display = allDone ? 'none' : 'block';
   }
