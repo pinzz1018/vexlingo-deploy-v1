@@ -3052,10 +3052,10 @@
         <div id="pro-how-to-buy" style="font-size:12px;color:#8B7FA8;margin-bottom:14px;line-height:1.8;background:rgba(255,255,255,.03);border-radius:10px;padding:12px;">
           <b style="color:#F0EEFF;" data-i18n="pro_how_title">Cara beli:</b><br>
           <span data-i18n="pro_how_1">1. Klik tombol bayar di bawah</span><br>
-          <span data-i18n="pro_how_2">2. Transfer <b style="color:#fbbf24;">Rp 10.000</b> via QRIS / bank</span><br>
+          <span data-i18n-html="pro_how_2">2. Transfer <b style="color:#fbbf24;">Rp 10.000</b> via QRIS / bank</span><br>
           <span data-i18n="pro_how_3">3. Screenshot bukti bayar</span><br>
-          <span data-i18n="pro_how_4">4. Kirim ke Telegram <b style="color:#fbbf24;">@pinzz1018</b> + tulis email akun VexLingo kamu</span><br>
-          <span data-i18n="pro_how_5">5. Pro aktif dalam maks <b style="color:#F0EEFF;">1×24 jam</b></span>
+          <span data-i18n-html="pro_how_4">4. Kirim ke Telegram <b style="color:#fbbf24;">@pinzz1018</b> + tulis email akun VexLingo kamu</span><br>
+          <span data-i18n-html="pro_how_5">5. Pro aktif dalam maks <b style="color:#F0EEFF;">1×24 jam</b></span>
         </div>
         <a href="https://trakteer.id/vexlingo-pinzz" target="_blank" rel="noopener" style="display:block;width:100%;padding:13px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border:none;border-radius:12px;color:#1a1a2e;font-size:14px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box;" data-i18n="pro_pay_btn">💳 Bayar Sekarang — Rp 10.000</a>
         <a href="https://t.me/pinzz1018" target="_blank" rel="noopener" style="display:block;width:100%;padding:11px;background:rgba(37,99,235,.15);border:1.5px solid rgba(37,99,235,.4);border-radius:12px;color:#93C5FD;font-size:13px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;margin-bottom:10px;box-sizing:border-box;" data-i18n="pro_telegram_btn">✈ Konfirmasi via Telegram @pinzz1018</a>
@@ -3074,7 +3074,7 @@
               <input
                 id="redeem-code-input"
                 type="text"
-                placeholder="Masukkan kode aktivasi kamu"
+                placeholder="Enter your code"
                 data-i18n-attr="placeholder:pro_redeem_placeholder"
                 maxlength="20"
                 oninput="this.value = this.value.toUpperCase(); this.style.fontFamily = this.value ? '\'Orbitron\',monospace' : '\'Inter\',system-ui,sans-serif'; this.style.letterSpacing = this.value ? '1px' : '.3px';"
@@ -3657,7 +3657,7 @@
       pro_already_paid: 'ALREADY TRANSFERRED?',
       pro_redeem_title: '⚡ Enter Activation Code',
       pro_redeem_desc: 'Code will be sent to your Telegram after transfer is confirmed.',
-      pro_redeem_placeholder: 'Enter your activation code',
+      pro_redeem_placeholder: 'Enter your code',
       pro_redeem_btn: 'Activate',
       pro_close_btn: 'Close',
       pro_challenge_streak3_name: '3-Day Streak',
@@ -3860,7 +3860,7 @@
       pro_already_paid: 'SUDAH TRANSFER?',
       pro_redeem_title: '⚡ Masukkan Kode Aktivasi',
       pro_redeem_desc: 'Kode dikirim ke Telegram kamu setelah transfer dikonfirmasi.',
-      pro_redeem_placeholder: 'Masukkan kode aktivasi kamu',
+      pro_redeem_placeholder: 'Masukkan kode kamu',
       pro_redeem_btn: 'Aktifkan',
       pro_close_btn: 'Tutup',
       pro_challenge_streak3_name: 'Streak 3 Hari',
@@ -3886,11 +3886,14 @@
   window.t = t;
 
   // Walk the DOM applying translations to anything tagged with data-i18n.
-  // data-i18n="key" sets textContent; data-i18n-attr="title:key2|placeholder:key3"
-  // can translate specific attributes too.
+  // data-i18n="key" sets textContent; data-i18n-html="key" sets innerHTML (for keys with <b> tags etc)
+  // data-i18n-attr="title:key2|placeholder:key3" can translate specific attributes too.
   function applyI18n() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
       el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      el.innerHTML = t(el.getAttribute('data-i18n-html'));
     });
     document.querySelectorAll('[data-i18n-attr]').forEach(el => {
       const pairs = el.getAttribute('data-i18n-attr').split('|');
