@@ -286,6 +286,7 @@
     background: #000;
     overflow: hidden;
     cursor: default;
+    isolation: isolate;
   }
   #pro-unlock-overlay.active { display: block; }
 
@@ -297,6 +298,7 @@
     transform: translate(-50%, -50%) scale(0);
     opacity: 0;
     pointer-events: none;
+    will-change: transform, opacity;
   }
 
   /* particle container */
@@ -323,11 +325,12 @@
     position: absolute;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -180%) scale(0.85);
+    transform: translate(-50%, -320%) scale(0.7);
     opacity: 0;
     pointer-events: none;
     width: 200px;
     height: 214px;
+    will-change: transform, opacity;
   }
   #puo-vex-wrap svg {
     width: 200px;
@@ -5694,6 +5697,7 @@
       const user = _adminAllUsers.find(u => u.uid === uid);
       if (user) user.isPro = makeProVal;
       adminFilterUsers();
+      if (makeProVal) showProUnlockedModal();
     } catch(e) {
       alert('Gagal update: ' + e.message);
     }
@@ -7211,28 +7215,34 @@
     const title   = document.getElementById('puo-title');
     const btn     = document.getElementById('puo-btn');
     const sparks  = document.getElementById('puo-text-sparks');
-    const body    = document.getElementById('puo-body-group');
 
     if (!ov) return;
 
     /* reset */
     ov.classList.add('active');
+    ov.style.opacity = '1';
     ov.style.background = '#000';
-    glow.style.animation = 'none';
-    glow.style.opacity = '0';
-    glow.style.transform = 'translate(-50%,-50%) scale(0)';
-    parts.innerHTML = '';
-    sparks.innerHTML = '';
-    vexWrap.style.animation = 'none';
-    vexWrap.style.opacity = '0';
-    vexWrap.style.transform = 'translate(-50%, -320%) scale(0.7)';
-    title.textContent = '';
-    btn.style.opacity = '0';
-    btn.style.animation = 'none';
-    btn.style.pointerEvents = 'none';
-    document.getElementById('puo-stars').setAttribute('opacity', '0');
 
-    /* remove old rings */
+    /* reset glow */
+    glow.style.cssText = 'opacity:0; transform:translate(-50%,-50%) scale(0); animation:none;';
+
+    /* reset particles */
+    parts.innerHTML = '';
+    if (sparks) sparks.innerHTML = '';
+
+    /* reset vex — force reflow so animation restarts cleanly */
+    vexWrap.style.cssText = 'opacity:0; transform:translate(-50%,-320%) scale(0.7); animation:none;';
+    void vexWrap.offsetWidth;
+
+    /* reset text + button */
+    title.textContent = '';
+    btn.style.cssText = 'opacity:0; animation:none; pointer-events:none;';
+
+    /* reset stars */
+    const stars = document.getElementById('puo-stars');
+    if (stars) stars.setAttribute('opacity', '0');
+
+    /* remove leftover rings */
     ov.querySelectorAll('.puo-ring').forEach(r => r.remove());
 
     const W = window.innerWidth;
@@ -7240,108 +7250,97 @@
     const cx = W / 2;
     const cy = H / 2;
 
-    /* ── PHASE 1: pure black 0–2s (nothing, already black) ── */
+    /* ── PHASE 1: pure black 0–2s ── */
 
     /* ── PHASE 2: SHOCKWAVE 2–4s ── */
     setTimeout(() => {
       /* glow burst */
-      glow.style.animation = 'none';
       void glow.offsetWidth;
-      glow.style.animation = 'puo-glow-in 1s cubic-bezier(.22,1,.36,1) both';
+      glow.style.animation = 'puo-glow-in 1.2s cubic-bezier(.22,1,.36,1) forwards';
 
       /* 4 expanding rings */
-      const ringColors = [
-        'rgba(168,85,247,.9)',
-        'rgba(45,212,191,.7)',
-        'rgba(168,85,247,.5)',
-        'rgba(255,255,255,.35)'
-      ];
-      const ringDelays = [0, 120, 280, 450];
-      const ringSizes = [Math.max(W,H)*2.2, Math.max(W,H)*2.6, Math.max(W,H)*3, Math.max(W,H)*3.4];
+      const ringColors = ['rgba(168,85,247,.9)','rgba(45,212,191,.75)','rgba(168,85,247,.5)','rgba(255,255,255,.3)'];
+      const ringDelays = [0, 150, 320, 500];
+      const ringSize = Math.max(W, H) * 2.8;
       ringColors.forEach((col, i) => {
         const ring = document.createElement('div');
         ring.className = 'puo-ring';
+        const sz = ringSize * (0.8 + i * 0.15);
         ring.style.cssText = `
-          width:${ringSizes[i]}px; height:${ringSizes[i]}px;
-          border: ${3 - i*0.5}px solid ${col};
-          animation: puo-ring-burst ${1 + i*0.15}s cubic-bezier(.12,.7,.4,1) ${ringDelays[i]}ms both;
+          width:${sz}px; height:${sz}px;
+          border:${Math.max(1, 3 - i * 0.6)}px solid ${col};
+          animation: puo-ring-burst ${1.1 + i * 0.15}s cubic-bezier(.1,.6,.3,1) ${ringDelays[i]}ms forwards;
         `;
         ov.appendChild(ring);
       });
 
-      /* burst particles */
-      const PCNT = 60;
-      for (let i = 0; i < PCNT; i++) {
+      /* burst particles — dari tengah ke segala arah */
+      for (let i = 0; i < 70; i++) {
         const p = document.createElement('div');
-        const angle = (i / PCNT) * Math.PI * 2;
-        const dist = 120 + Math.random() * (Math.min(W, H) * 0.45);
+        const angle = (i / 70) * Math.PI * 2 + Math.random() * 0.2;
+        const dist = 80 + Math.random() * (Math.min(W, H) * 0.5);
         const px = Math.cos(angle) * dist;
         const py = Math.sin(angle) * dist;
         const size = 2 + Math.random() * 5;
-        const colors = ['#a855f7','#2dd4bf','#fde68a','#f9a8d4','#fff','#7c3aed'];
-        const col = colors[Math.floor(Math.random() * colors.length)];
-        const dur = 0.8 + Math.random() * 0.9;
-        const delay = Math.random() * 0.3;
+        const cols = ['#a855f7','#2dd4bf','#fde68a','#f9a8d4','#fff','#7c3aed'];
+        const col = cols[Math.floor(Math.random() * cols.length)];
         p.style.cssText = `
           position:absolute; border-radius:50%;
           width:${size}px; height:${size}px;
           background:${col};
           left:${cx}px; top:${cy}px;
           --px:${px}px; --py:${py}px;
-          animation: puo-particle-burst ${dur}s cubic-bezier(.2,.8,.4,1) ${delay}s both;
+          animation: puo-particle-burst ${0.7 + Math.random() * 0.8}s cubic-bezier(.2,.8,.3,1) ${Math.random() * 200}ms forwards;
         `;
         parts.appendChild(p);
       }
 
-      /* floating ambient particles that linger */
-      for (let i = 0; i < 30; i++) {
+      /* ambient lingering particles */
+      for (let i = 0; i < 25; i++) {
         const p = document.createElement('div');
-        const x = Math.random() * W;
-        const y = Math.random() * H;
-        const size = 1.5 + Math.random() * 3;
-        const colors = ['#a855f7','#2dd4bf','#fde68a'];
-        const col = colors[Math.floor(Math.random() * colors.length)];
+        const size = 1.5 + Math.random() * 2.5;
+        const cols = ['#a855f7','#2dd4bf','#fde68a'];
+        const col = cols[Math.floor(Math.random() * cols.length)];
         p.style.cssText = `
           position:absolute; border-radius:50%;
           width:${size}px; height:${size}px;
           background:${col};
-          left:${x}px; top:${y}px;
+          left:${Math.random() * W}px; top:${Math.random() * H}px;
           opacity:0;
-          animation: puo-spark-float ${2 + Math.random() * 3}s ease-out ${1.5 + Math.random() * 2}s both;
-          --sx:${(Math.random() - 0.5) * 60}px;
-          --sy:${-20 - Math.random() * 60}px;
+          --sx:${(Math.random() - 0.5) * 50}px;
+          --sy:${-15 - Math.random() * 50}px;
+          animation: puo-spark-float ${2 + Math.random() * 2.5}s ease-out ${1.2 + Math.random() * 2}s forwards;
         `;
         parts.appendChild(p);
       }
-
     }, 2000);
 
-    /* ── PHASE 3–4: VEX DROPS 4–7s ── */
+    /* ── PHASE 3: VEX TURUN 4–6s ── */
     setTimeout(() => {
-      vexWrap.style.animation = 'puo-vex-drop .9s cubic-bezier(.22,1,.36,1) both';
+      void vexWrap.offsetWidth;
+      vexWrap.style.animation = 'puo-vex-drop 1.1s cubic-bezier(.22,1,.36,1) forwards';
     }, 4000);
 
-    /* sway after landing */
+    /* ── PHASE 4: LANDING SWAY 6–7s ── */
     setTimeout(() => {
-      vexWrap.style.animation = 'puo-vex-sway .6s ease-in-out both';
-    }, 4900);
+      /* set opacity dulu biar ga hilang saat ganti animation */
+      vexWrap.style.opacity = '1';
+      vexWrap.style.transform = 'translate(-50%, -50%) scale(1)';
+      vexWrap.style.animation = 'puo-vex-sway .7s ease-in-out forwards';
+    }, 5100);
 
-    /* glow breathe + stars pop + idle float */
+    /* ── IDLE FLOAT + STARS 5.8s+ ── */
     setTimeout(() => {
       glow.style.animation = 'puo-glow-breathe 3s ease-in-out infinite';
-      document.getElementById('puo-stars').setAttribute('opacity', '1');
-      document.getElementById('puo-stars').style.animation = '';
-      setTimeout(() => {
-        vexWrap.style.animation = 'puo-vex-float 4s ease-in-out infinite';
-      }, 100);
-      /* start blink loop */
+      if (stars) stars.setAttribute('opacity', '1');
+      vexWrap.style.animation = 'puo-vex-float 4.5s ease-in-out infinite';
       puoStartBlink();
-    }, 5500);
+    }, 5800);
 
     /* ── PHASE 5: TYPEWRITER 7–11s ── */
     const fullText = 'GALACTIC PRO';
     let charIdx = 0;
-    const charDelay = (11000 - 7000) / fullText.length; /* ~333ms per char */
+    const charDelay = 4000 / fullText.length;
 
     function typeNextChar() {
       if (charIdx > fullText.length) return;
@@ -7349,10 +7348,9 @@
       charIdx++;
       if (charIdx <= fullText.length) {
         setTimeout(typeNextChar, charDelay);
-        /* spark on certain chars: G(0), A(2,5), C(4), I(6), O(11) */
         const sparkChars = [0, 2, 4, 5, 6, 11];
         if (sparkChars.includes(charIdx - 1)) {
-          setTimeout(() => spawnTextSparks(charIdx - 1), 50);
+          setTimeout(() => spawnTextSparks(charIdx - 1), 80);
         }
       }
     }
@@ -7360,8 +7358,12 @@
 
     /* ── PHASE 6: BUTTON 11–12s ── */
     setTimeout(() => {
-      btn.style.animation = 'puo-btn-in .6s cubic-bezier(.22,1,.36,1) both, puo-btn-breathe 2s ease-in-out 0.6s infinite';
-      btn.style.pointerEvents = 'auto';
+      btn.style.animation = 'puo-btn-in .6s cubic-bezier(.22,1,.36,1) forwards';
+      setTimeout(() => {
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+        btn.style.animation = 'puo-btn-breathe 2s ease-in-out infinite';
+      }, 600);
     }, 11000);
   }
 
