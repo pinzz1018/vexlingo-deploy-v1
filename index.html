@@ -404,19 +404,51 @@
     0%, 100% { opacity: .45; transform: translate(-50%,-50%) scale(.88); }
     50%       { opacity: .7;  transform: translate(-50%,-50%) scale(1); }
   }
+  /* ── Vex skydive: shoots in from above, slams down with bounce, lands upright ── */
   @keyframes puo-vex-skydive {
-    0%   { transform: translate(-50%, -160%) rotate(175deg) scale(.6); opacity: 0; }
-    12%  { opacity: 1; }
-    60%  { transform: translate(-50%, -46%) rotate(183deg) scale(1.03); opacity: 1; }
-    80%  { transform: translate(-50%, -49%) rotate(179deg) scale(.98); }
-    100% { transform: translate(-50%, -50%) rotate(180deg) scale(1); opacity: 1; }
+    0%   { transform: translate(-50%, -340%) scale(.22) rotate(-6deg); opacity: 0; filter: blur(3px); }
+    7%   { opacity: 1; filter: blur(1px); }
+    30%  { filter: blur(0px); }
+    58%  { transform: translate(-50%, -42%) scale(1.14) rotate(3deg); opacity: 1; filter: blur(0px); }
+    74%  { transform: translate(-50%, -53%) scale(.93) rotate(-2deg); }
+    86%  { transform: translate(-50%, -47%) scale(1.05) rotate(1deg); }
+    100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
   }
   @keyframes puo-vex-float {
-    0%   { transform: translate(-50%, -50%) rotate(180deg) translateY(0px); }
-    25%  { transform: translate(-50%, -50%) rotate(183deg) translateY(-9px); }
-    55%  { transform: translate(-50%, -50%) rotate(180deg) translateY(-5px); }
-    75%  { transform: translate(-50%, -50%) rotate(177deg) translateY(-11px); }
-    100% { transform: translate(-50%, -50%) rotate(180deg) translateY(0px); }
+    0%   { transform: translate(-50%, -50%) translateY(0px) rotate(0deg); }
+    25%  { transform: translate(-50%, -50%) translateY(-9px) rotate(1.5deg); }
+    55%  { transform: translate(-50%, -50%) translateY(-5px) rotate(0deg); }
+    75%  { transform: translate(-50%, -50%) translateY(-11px) rotate(-1.5deg); }
+    100% { transform: translate(-50%, -50%) translateY(0px) rotate(0deg); }
+  }
+
+  /* ── Speed trail streaks behind Vex during descent ── */
+  #puo-trail {
+    position: absolute; left: 50%; top: 0;
+    transform: translateX(-50%);
+    pointer-events: none; z-index: 2;
+    display: none; width: 200px;
+  }
+  #puo-trail.active { display: block; }
+  .puo-trail-streak {
+    position: absolute; left: 50%;
+    transform-origin: top center;
+    border-radius: 999px;
+    pointer-events: none; opacity: 0;
+  }
+  @keyframes puo-trail-fade {
+    0%   { opacity: 0; transform: translateX(-50%) scaleY(.5); }
+    20%  { opacity: var(--top, .65); }
+    100% { opacity: 0; transform: translateX(-50%) scaleY(1.4) translateY(20px); }
+  }
+  /* landing impact ring */
+  @keyframes puo-land-ring {
+    0%   { opacity: .85; transform: translate(-50%,-50%) scale(0); }
+    100% { opacity: 0;   transform: translate(-50%,-50%) scale(3.2); }
+  }
+  .puo-land-ring {
+    position: absolute; left: 50%; top: 50%;
+    border-radius: 50%; pointer-events: none; opacity: 0;
   }
   @keyframes puo-particle-burst {
     0%   { opacity: 0; transform: translate(0,0) scale(.3); }
@@ -3345,6 +3377,7 @@
   <div id="pro-unlock-overlay">
     <div id="puo-glow"></div>
     <div id="puo-particles"></div>
+    <div id="puo-trail"></div>
 
     <!-- Vex SVG clone for cinematic (isolated, no DOM conflicts) -->
     <div id="puo-vex-wrap">
@@ -7204,6 +7237,7 @@
     const ov      = document.getElementById('pro-unlock-overlay');
     const glow    = document.getElementById('puo-glow');
     const parts   = document.getElementById('puo-particles');
+    const trail   = document.getElementById('puo-trail');
     const vexWrap = document.getElementById('puo-vex-wrap');
     const title   = document.getElementById('puo-title');
     const btn     = document.getElementById('puo-btn');
@@ -7217,13 +7251,15 @@
     ov.style.opacity = '1';
     glow.style.cssText = 'opacity:0; transform:translate(-50%,-50%) scale(0); animation:none;';
     parts.innerHTML = '';
+    if (trail) { trail.innerHTML = ''; trail.classList.remove('active'); }
     if (sparks) sparks.innerHTML = '';
-    vexWrap.style.cssText = 'opacity:0; transform:translate(-50%,-160%) rotate(175deg) scale(0.6); animation:none;';
+    // Vex starts far above, upright (no rotate), tiny
+    vexWrap.style.cssText = 'opacity:0; transform:translate(-50%,-340%) scale(0.22) rotate(-6deg); animation:none;';
     void vexWrap.offsetWidth;
     title.textContent = '';
     btn.style.cssText = 'opacity:0; animation:none; pointer-events:none;';
     if (stars) stars.setAttribute('opacity', '0');
-    ov.querySelectorAll('.puo-ring').forEach(r => r.remove());
+    ov.querySelectorAll('.puo-ring, .puo-land-ring').forEach(r => r.remove());
     if (_puoBlinkTimer) { clearTimeout(_puoBlinkTimer); _puoBlinkTimer = null; }
 
     const W = window.innerWidth;
@@ -7231,67 +7267,107 @@
     const cx = W / 2;
     const cy = H / 2;
 
-    /* ── PHASE 1: pure black 0-2s ── */
-
-    /* ── PHASE 2: SHOCKWAVE 2s ── */
+    /* ── PHASE 1: Blackout 0-1s, glow hints ── */
     setTimeout(() => {
       void glow.offsetWidth;
-      glow.style.animation = 'puo-glow-in 1.2s cubic-bezier(.22,1,.36,1) forwards';
+      glow.style.animation = 'puo-glow-in 1s cubic-bezier(.22,1,.36,1) forwards';
+    }, 800);
 
-      /* 3 rings (lebih sedikit, ga lag) */
+    /* ── PHASE 2: VEX SKYDIVE 1.5s — upright, rockets in from top ── */
+    setTimeout(() => {
+      // Spawn speed trail streaks right before Vex appears
+      if (trail) {
+        trail.classList.add('active');
+        // Position trail centered on where Vex will land
+        trail.style.left = '50%';
+        trail.style.top = '0';
+        trail.style.height = H + 'px';
+
+        const trailColors = [
+          { col: 'rgba(168,85,247,.7)',  w: 6,  top: .7 },
+          { col: 'rgba(45,212,191,.5)',  w: 3,  top: .45 },
+          { col: 'rgba(255,255,255,.35)',w: 2,  top: .3 },
+          { col: 'rgba(168,85,247,.4)',  w: 10, top: .25 },
+          { col: 'rgba(168,85,247,.25)', w: 16, top: .12 },
+        ];
+        trailColors.forEach(({ col, w, top }, i) => {
+          const s = document.createElement('div');
+          s.className = 'puo-trail-streak';
+          const trailH = H * (0.55 + Math.random() * 0.2);
+          const offsetX = (Math.random() - 0.5) * 18;
+          s.style.cssText = `
+            width:${w}px; height:${trailH}px;
+            background: linear-gradient(to bottom, transparent 0%, ${col} 40%, transparent 100%);
+            top:0; left:calc(50% + ${offsetX}px);
+            transform: translateX(-50%);
+            --top: ${top};
+            animation: puo-trail-fade ${.55 + i * .08}s ease-out ${i * 35}ms forwards;
+          `;
+          trail.appendChild(s);
+        });
+      }
+
+      // Start skydive — Vex is upright, no rotation gimmick
+      void vexWrap.offsetWidth;
+      vexWrap.style.animation = 'puo-vex-skydive 1.15s cubic-bezier(.22,1,.36,1) forwards';
+    }, 1500);
+
+    /* ── PHASE 3: LANDING IMPACT 2.65s (when Vex hits center) ── */
+    setTimeout(() => {
+      // Kill trail
+      if (trail) trail.classList.remove('active');
+
+      // 3 impact rings expanding outward from landing point
       const ringDefs = [
-        { col: 'rgba(168,85,247,.85)', delay: 0,   dur: 1.1 },
-        { col: 'rgba(45,212,191,.65)', delay: 160, dur: 1.2 },
-        { col: 'rgba(255,255,255,.25)',delay: 350, dur: 1.4 },
+        { col: 'rgba(168,85,247,.9)', bw: 4, dur: .7,  delay: 0   },
+        { col: 'rgba(45,212,191,.6)', bw: 3, dur: .85, delay: 80  },
+        { col: 'rgba(255,255,255,.3)',bw: 2, dur: 1.0, delay: 180 },
       ];
-      const baseSize = Math.max(W, H) * 2.6;
-      ringDefs.forEach(({ col, delay, dur }, i) => {
-        const ring = document.createElement('div');
-        ring.className = 'puo-ring';
-        const sz = baseSize * (1 + i * 0.2);
-        ring.style.cssText = `width:${sz}px;height:${sz}px;border:${2.5 - i * 0.5}px solid ${col};animation:puo-ring-burst ${dur}s cubic-bezier(.1,.6,.3,1) ${delay}ms forwards;`;
-        ov.appendChild(ring);
+      const landSz = Math.max(W, H) * 2.2;
+      ringDefs.forEach(({ col, bw, dur, delay }) => {
+        const r = document.createElement('div');
+        r.className = 'puo-land-ring';
+        r.style.cssText = `width:${landSz}px;height:${landSz}px;border:${bw}px solid ${col};animation:puo-land-ring ${dur}s cubic-bezier(.1,.6,.25,1) ${delay}ms forwards;`;
+        ov.appendChild(r);
       });
 
-      /* burst particles — dikurangin jadi 28 */
-      for (let i = 0; i < 28; i++) {
+      // Burst particles — spread from center on landing
+      for (let i = 0; i < 32; i++) {
         const p = document.createElement('div');
-        const angle = (i / 28) * Math.PI * 2 + Math.random() * 0.3;
-        const dist = 60 + Math.random() * (Math.min(W, H) * 0.4);
-        const cols = ['#a855f7','#2dd4bf','#fde68a','#f9a8d4','#fff'];
-        p.style.cssText = `position:absolute;border-radius:50%;width:${2+Math.random()*4}px;height:${2+Math.random()*4}px;background:${cols[Math.floor(Math.random()*cols.length)]};left:${cx}px;top:${cy}px;--px:${Math.cos(angle)*dist}px;--py:${Math.sin(angle)*dist}px;animation:puo-particle-burst ${0.6+Math.random()*0.7}s cubic-bezier(.2,.8,.3,1) ${Math.random()*150}ms forwards;`;
+        const angle = (i / 32) * Math.PI * 2 + Math.random() * 0.25;
+        const dist  = 50 + Math.random() * (Math.min(W, H) * 0.38);
+        const cols  = ['#a855f7','#2dd4bf','#fde68a','#f9a8d4','#fff'];
+        p.style.cssText = `position:absolute;border-radius:50%;width:${2+Math.random()*4.5}px;height:${2+Math.random()*4.5}px;background:${cols[i%cols.length]};left:${cx}px;top:${cy}px;--px:${Math.cos(angle)*dist}px;--py:${Math.sin(angle)*dist}px;animation:puo-particle-burst ${.55+Math.random()*.65}s cubic-bezier(.2,.8,.3,1) ${Math.random()*120}ms forwards;`;
         parts.appendChild(p);
       }
 
-      /* ambient particles — 12 aja */
-      for (let i = 0; i < 12; i++) {
-        const cols = ['#a855f7','#2dd4bf','#fde68a'];
-        const p = document.createElement('div');
-        p.style.cssText = `position:absolute;border-radius:50%;width:${1.5+Math.random()*2}px;height:${1.5+Math.random()*2}px;background:${cols[i%3]};left:${Math.random()*W}px;top:${Math.random()*H}px;opacity:0;--sx:${(Math.random()-.5)*40}px;--sy:${-10-Math.random()*40}px;animation:puo-spark-float ${1.8+Math.random()*2}s ease-out ${1+Math.random()*2}s forwards;`;
-        parts.appendChild(p);
-      }
-    }, 2000);
+      // Glow flares up on landing
+      void glow.offsetWidth;
+      glow.style.animation = 'puo-glow-in .4s ease-out forwards';
+    }, 2650);
 
-    /* ── PHASE 3: VEX SKYDIVE 4s ── */
-    setTimeout(() => {
-      void vexWrap.offsetWidth;
-      vexWrap.style.animation = 'puo-vex-skydive 1.4s cubic-bezier(.22,1,.36,1) forwards';
-    }, 4000);
-
-    /* ── PHASE 4: IDLE FLOAT langsung setelah skydive selesai ── */
+    /* ── PHASE 4: IDLE FLOAT + ambient particles 3.2s ── */
     setTimeout(() => {
       vexWrap.style.opacity = '1';
-      vexWrap.style.transform = 'translate(-50%, -50%) rotate(180deg) scale(1)';
+      vexWrap.style.transform = 'translate(-50%, -50%) scale(1) rotate(0deg)';
       vexWrap.style.animation = 'puo-vex-float 4s ease-in-out infinite';
       glow.style.animation = 'puo-glow-breathe 3s ease-in-out infinite';
       if (stars) stars.setAttribute('opacity', '1');
       puoStartBlink();
-    }, 5400);
 
-    /* ── PHASE 5: TYPEWRITER 7-11s ── */
+      // Ambient floating particles
+      for (let i = 0; i < 14; i++) {
+        const cols = ['#a855f7','#2dd4bf','#fde68a'];
+        const p = document.createElement('div');
+        p.style.cssText = `position:absolute;border-radius:50%;width:${1.5+Math.random()*2.5}px;height:${1.5+Math.random()*2.5}px;background:${cols[i%3]};left:${Math.random()*W}px;top:${Math.random()*H}px;opacity:0;--sx:${(Math.random()-.5)*40}px;--sy:${-12-Math.random()*45}px;animation:puo-spark-float ${2+Math.random()*2.5}s ease-out ${Math.random()*2.5}s forwards;`;
+        parts.appendChild(p);
+      }
+    }, 3200);
+
+    /* ── PHASE 5: TYPEWRITER 4.5-8s ── */
     const fullText = 'GALACTIC PRO';
     let charIdx = 0;
-    const charDelay = 4000 / fullText.length;
+    const charDelay = 3500 / fullText.length;
     function typeNextChar() {
       if (charIdx > fullText.length) return;
       title.textContent = fullText.slice(0, charIdx);
@@ -7301,9 +7377,9 @@
         if ([0,2,4,5,6,11].includes(charIdx - 1)) setTimeout(() => spawnTextSparks(charIdx - 1), 80);
       }
     }
-    setTimeout(typeNextChar, 7000);
+    setTimeout(typeNextChar, 4500);
 
-    /* ── PHASE 6: BUTTON 11s ── */
+    /* ── PHASE 6: BUTTON 8s ── */
     setTimeout(() => {
       btn.style.animation = 'puo-btn-in .6s cubic-bezier(.22,1,.36,1) forwards';
       setTimeout(() => {
@@ -7311,7 +7387,7 @@
         btn.style.pointerEvents = 'auto';
         btn.style.animation = 'puo-btn-breathe 2s ease-in-out infinite';
       }, 600);
-    }, 11000);
+    }, 8000);
   }
 
   /* spawn tiny sparks around a character in the title */
