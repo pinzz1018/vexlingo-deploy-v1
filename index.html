@@ -289,16 +289,6 @@
   }
   #pro-unlock-overlay.active { display: block; }
 
-  /* shockwave rings */
-  .puo-ring {
-    position: absolute;
-    top: 50%; left: 50%;
-    border-radius: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0;
-    pointer-events: none;
-  }
-
   /* particle container */
   #puo-particles {
     position: absolute; inset: 0;
@@ -309,31 +299,47 @@
   #puo-glow {
     position: absolute;
     top: 50%; left: 50%;
-    width: 600px; height: 600px;
+    width: 500px; height: 500px;
     transform: translate(-50%, -50%) scale(0);
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(124,58,237,.7) 0%, rgba(45,212,191,.3) 40%, transparent 70%);
-    filter: blur(40px);
+    background: radial-gradient(circle, rgba(124,58,237,.6) 0%, rgba(45,212,191,.25) 45%, transparent 70%);
+    filter: blur(38px);
     opacity: 0;
     pointer-events: none;
+    will-change: transform, opacity;
   }
 
-  /* Vex wrapper for the cinematic */
+  /* ── Vex wrapper ── */
   #puo-vex-wrap {
     position: absolute;
     left: 50%;
-    top: 50%;
-    transform: translate(-50%, -340%) scale(0.22) rotate(-6deg);
+    top: 48%;
+    transform: translate(-50%, -50%) translateY(40px);
     opacity: 0;
     pointer-events: none;
-    width: 280px;
-    height: 240px;
+    width: 200px;
+    height: 214px;
     will-change: transform, opacity;
   }
-  #puo-vex-wrap svg {
-    width: 280px;
-    height: 240px;
-    filter: drop-shadow(0 0 20px rgba(124,58,237,.8));
+  #puo-vex-svg {
+    width: 200px;
+    height: 214px;
+    display: block;
+    filter: drop-shadow(0 0 20px rgba(124,58,237,.85));
+    transform-origin: center bottom;
+  }
+
+  /* ── Crown ── */
+  #puo-crown {
+    position: absolute;
+    left: 50%;
+    /* horizontally centered on Vex head — Vex head is ~top 35% of SVG */
+    top: calc(48% - 107px - 60px); /* 48% = Vex center, -107px = half Vex height, -60px = above head */
+    transform: translateX(-50%) translateY(-200px);
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, opacity;
+    z-index: 5;
   }
 
   /* text area */
@@ -358,9 +364,11 @@
       0 0 100px rgba(45,212,191,.4);
     min-height: 1.2em;
     white-space: nowrap;
+    opacity: 0;
+    transform: translateY(10px);
   }
 
-  /* text particles around G A O */
+  /* text particles */
   .puo-text-spark {
     position: absolute;
     border-radius: 50%;
@@ -386,70 +394,62 @@
     cursor: pointer;
     opacity: 0;
     box-shadow: 0 0 30px rgba(124,58,237,.6), 0 4px 20px rgba(0,0,0,.4);
-    transition: transform .15s ease, box-shadow .15s ease;
     z-index: 10;
   }
-  #puo-btn:hover { transform: translateX(-50%) scale(1.05); box-shadow: 0 0 44px rgba(124,58,237,.9), 0 4px 24px rgba(0,0,0,.5); }
 
-  /* keyframes */
-  @keyframes puo-ring-burst {
-    0%   { transform: translate(-50%,-50%) scale(0); opacity: .9; }
-    100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
+  /* ── KEYFRAMES ── */
+
+  /* Vex: fade + slide up smoothly */
+  @keyframes puo-vex-enter {
+    0%   { opacity: 0; transform: translate(-50%, -50%) translateY(50px) scale(0.88); }
+    60%  { opacity: 1; transform: translate(-50%, -50%) translateY(-6px) scale(1.03); }
+    80%  { transform: translate(-50%, -50%) translateY(3px) scale(0.98); }
+    100% { opacity: 1; transform: translate(-50%, -50%) translateY(0) scale(1); }
   }
-  @keyframes puo-glow-in {
-    0%   { opacity: 0; transform: translate(-50%,-50%) scale(0); }
-    50%  { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-    100% { opacity: .55; transform: translate(-50%,-50%) scale(.9); }
-  }
-  @keyframes puo-glow-breathe {
-    0%, 100% { opacity: .45; transform: translate(-50%,-50%) scale(.88); }
-    50%       { opacity: .7;  transform: translate(-50%,-50%) scale(1); }
-  }
-  /* ── Vex skydive: diagonal entry from top-left → center (Free Fire style) ── */
-  @keyframes puo-vex-skydive {
-    0%   { transform: translate(calc(-50% - 180px), -280%) scale(.18); opacity: 0; }
-    8%   { opacity: 1; }
-    58%  { transform: translate(calc(-50% + 12px), -44%) scale(1.12); opacity: 1; }
-    74%  { transform: translate(calc(-50% - 6px), -53%) scale(.94); }
-    86%  { transform: translate(calc(-50% + 4px), -47%) scale(1.04); }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-  }
+  /* Vex idle float */
   @keyframes puo-vex-float {
-    0%   { transform: translate(-50%, -50%) translateY(0px) rotate(0deg); }
-    25%  { transform: translate(-50%, -50%) translateY(-9px) rotate(1.5deg); }
-    55%  { transform: translate(-50%, -50%) translateY(-5px) rotate(0deg); }
-    75%  { transform: translate(-50%, -50%) translateY(-11px) rotate(-1.5deg); }
-    100% { transform: translate(-50%, -50%) translateY(0px) rotate(0deg); }
+    0%,100% { transform: translate(-50%, -50%) translateY(0px); }
+    40%     { transform: translate(-50%, -50%) translateY(-10px); }
+    70%     { transform: translate(-50%, -50%) translateY(-6px); }
   }
 
-  /* ── Speed trail streaks behind Vex during descent ── */
-  #puo-trail {
-    position: absolute; left: 50%; top: 0;
-    transform: translateX(-50%);
-    pointer-events: none; z-index: 2;
-    display: none; width: 200px;
+  /* Crown: jatuh dari atas */
+  @keyframes puo-crown-fall {
+    0%   { opacity: 0; transform: translateX(-50%) translateY(-220px) rotate(-8deg); }
+    55%  { opacity: 1; transform: translateX(-50%) translateY(10px) rotate(3deg); }
+    72%  { transform: translateX(-50%) translateY(-6px) rotate(-2deg); }
+    85%  { transform: translateX(-50%) translateY(3px) rotate(1deg); }
+    100% { opacity: 1; transform: translateX(-50%) translateY(0px) rotate(0deg); }
   }
-  #puo-trail.active { display: block; }
-  .puo-trail-streak {
-    position: absolute; left: 50%;
-    transform-origin: top center;
-    border-radius: 999px;
-    pointer-events: none; opacity: 0;
+  /* Vex kepala kenyel saat mahkota landing */
+  @keyframes puo-head-squash {
+    0%   { transform: scaleX(1)   scaleY(1); }
+    20%  { transform: scaleX(1.14) scaleY(0.82); } /* squash gepeng */
+    45%  { transform: scaleX(0.9) scaleY(1.12); }  /* stretch mental */
+    65%  { transform: scaleX(1.05) scaleY(0.96); }
+    100% { transform: scaleX(1)   scaleY(1); }
   }
-  @keyframes puo-trail-fade {
-    0%   { opacity: 0; transform: translateX(-50%) scaleY(.5); }
-    20%  { opacity: var(--top, .65); }
-    100% { opacity: 0; transform: translateX(-50%) scaleY(1.4) translateY(20px); }
+  /* Crown kenyel kecil saat landing */
+  @keyframes puo-crown-settle {
+    0%   { transform: translateX(-50%) translateY(0) scaleX(1) scaleY(1); }
+    30%  { transform: translateX(-50%) translateY(2px) scaleX(1.12) scaleY(0.85); }
+    60%  { transform: translateX(-50%) translateY(-3px) scaleX(0.95) scaleY(1.06); }
+    100% { transform: translateX(-50%) translateY(0) scaleX(1) scaleY(1); }
   }
-  /* landing impact ring */
-  @keyframes puo-land-ring {
-    0%   { opacity: .85; transform: translate(-50%,-50%) scale(0); }
-    100% { opacity: 0;   transform: translate(-50%,-50%) scale(3.2); }
+  /* Crown idle subtle bob */
+  @keyframes puo-crown-float {
+    0%,100% { transform: translateX(-50%) translateY(0px) rotate(0deg); }
+    40%     { transform: translateX(-50%) translateY(-10px) rotate(1deg); }
+    70%     { transform: translateX(-50%) translateY(-6px) rotate(-0.5deg); }
   }
-  .puo-land-ring {
-    position: absolute; left: 50%; top: 50%;
-    border-radius: 50%; pointer-events: none; opacity: 0;
+
+  /* Title reveal */
+  @keyframes puo-title-in {
+    0%   { opacity: 0; transform: translateY(14px) scale(0.92); }
+    60%  { opacity: 1; transform: translateY(-3px) scale(1.03); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
   }
+  /* Particle burst on landing */
   @keyframes puo-particle-burst {
     0%   { opacity: 0; transform: translate(0,0) scale(.3); }
     10%  { opacity: 1; }
@@ -457,8 +457,17 @@
   }
   @keyframes puo-spark-float {
     0%   { opacity: 0; transform: translate(0,0) scale(0); }
-    15%  { opacity: 1; transform: translate(0, -6px) scale(1); }
-    100% { opacity: 0; transform: translate(var(--sx,0px), var(--sy,-30px)) scale(.3); }
+    15%  { opacity: 1; transform: translate(0,-6px) scale(1); }
+    100% { opacity: 0; transform: translate(var(--sx,0px),var(--sy,-30px)) scale(.3); }
+  }
+  @keyframes puo-glow-in {
+    0%   { opacity: 0; transform: translate(-50%,-50%) scale(0); }
+    50%  { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+    100% { opacity: .5; transform: translate(-50%,-50%) scale(.9); }
+  }
+  @keyframes puo-glow-breathe {
+    0%,100% { opacity: .4; transform: translate(-50%,-50%) scale(.88); }
+    50%     { opacity: .65; transform: translate(-50%,-50%) scale(1); }
   }
   @keyframes puo-btn-in {
     0%   { opacity: 0; transform: translateX(-50%) translateY(16px); }
@@ -3375,62 +3384,61 @@
        PRO UNLOCK CINEMATIC OVERLAY
   ══════════════════════════════════════════ -->
   <div id="pro-unlock-overlay">
-    <canvas id="puo-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;"></canvas>
     <div id="puo-glow"></div>
     <div id="puo-particles"></div>
-    <div id="puo-trail"></div>
 
-    <!-- Vex SKYDIVE: pakai SVG asli + rotate diagonal + energy trail -->
-    <div id="puo-vex-wrap">
-      <svg viewBox="0 0 280 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- CROWN: jatuh dari atas layar, mendarat di kepala Vex -->
+    <div id="puo-crown">
+      <svg viewBox="0 0 120 80" width="120" height="80" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <!-- energy trail gradient -->
-          <linearGradient id="p-trailCore" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
-            <stop offset="35%" stop-color="rgba(168,85,247,0.5)"/>
-            <stop offset="65%" stop-color="rgba(45,212,191,0.75)"/>
-            <stop offset="100%" stop-color="rgba(255,255,255,0.9)"/>
+          <linearGradient id="crownGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fde68a"/>
+            <stop offset="50%" stop-color="#f59e0b"/>
+            <stop offset="100%" stop-color="#d97706"/>
           </linearGradient>
-          <linearGradient id="p-trailWide" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="rgba(168,85,247,0)"/>
-            <stop offset="60%" stop-color="rgba(168,85,247,0.3)"/>
-            <stop offset="100%" stop-color="rgba(168,85,247,0.5)"/>
+          <linearGradient id="crownShine" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.45)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
           </linearGradient>
         </defs>
+        <!-- Crown body -->
+        <path d="M8 68 L8 38 L32 54 L60 12 L88 54 L112 38 L112 68 Z"
+              fill="url(#crownGrad)" stroke="#d97706" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M8 68 L8 38 L32 54 L60 12 L88 54 L112 38 L112 68 Z"
+              fill="url(#crownShine)" opacity="0.4"/>
+        <!-- Base band -->
+        <rect x="8" y="63" width="104" height="10" rx="5" fill="#d97706"/>
+        <rect x="8" y="63" width="104" height="5" rx="4" fill="rgba(255,255,255,0.15)"/>
+        <!-- Gems -->
+        <circle cx="60" cy="19" r="7" fill="#f9a8d4" stroke="#fde68a" stroke-width="1.5"/>
+        <circle cx="60" cy="19" r="3.5" fill="white" opacity="0.4"/>
+        <circle cx="29" cy="51" r="5" fill="#2dd4bf" stroke="#fde68a" stroke-width="1.5"/>
+        <circle cx="91" cy="51" r="5" fill="#a78bfa" stroke="#fde68a" stroke-width="1.5"/>
+        <!-- Sparkles -->
+        <circle cx="60" cy="5" r="2.5" fill="#fde68a"/>
+        <circle cx="18" cy="25" r="1.8" fill="#fde68a" opacity="0.8"/>
+        <circle cx="102" cy="25" r="1.8" fill="#fde68a" opacity="0.8"/>
+      </svg>
+    </div>
 
-        <!-- ENERGY TRAIL: dari belakang Vex (atas-kiri), Vex menukik ke bawah-kanan -->
-        <!-- Trail ini di-render SEBELUM Vex supaya ada di belakang -->
-        <g opacity="0.85">
-          <!-- wide glow trail -->
-          <line x1="10" y1="20" x2="160" y2="170" stroke="url(#p-trailWide)" stroke-width="40" stroke-linecap="round"/>
-          <!-- mid trail -->
-          <line x1="20" y1="10" x2="155" y2="165" stroke="url(#p-trailCore)" stroke-width="14" stroke-linecap="round"/>
-          <!-- bright core -->
-          <line x1="35" y1="5" x2="152" y2="162" stroke="rgba(255,255,255,0.85)" stroke-width="3.5" stroke-linecap="round"/>
-          <!-- side streak 1 -->
-          <line x1="5" y1="35" x2="148" y2="175" stroke="rgba(168,85,247,0.35)" stroke-width="7" stroke-linecap="round"/>
-          <!-- side streak 2 -->
-          <line x1="0" y1="55" x2="145" y2="180" stroke="rgba(45,212,191,0.25)" stroke-width="5" stroke-linecap="round"/>
-        </g>
-
-        <!-- VEX: SVG asli, dirotate 40deg searah jarum jam supaya kepala ngarah bawah-kanan -->
-        <g transform="rotate(40, 140, 150)">
-
+    <!-- VEX: SVG asli, posisi normal -->
+    <div id="puo-vex-wrap">
+      <svg id="puo-vex-svg" viewBox="0 0 280 300" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="p-planetGrad" cx="40%" cy="35%" r="65%">
+    <radialGradient id="po-planetGrad" cx="40%" cy="35%" r="65%">
       <stop offset="0%" stop-color="#6d28d9"/>
       <stop offset="100%" stop-color="#2e1065"/>
     </radialGradient>
 
     <!-- Helmet glass: bright top-left to deep purple bottom-right -->
-    <radialGradient id="p-helmetGlass" cx="35%" cy="28%" r="75%">
+    <radialGradient id="po-helmetGlass" cx="35%" cy="28%" r="75%">
       <stop offset="0%" stop-color="#e9e4ff"/>
       <stop offset="45%" stop-color="#b9a8f5"/>
       <stop offset="100%" stop-color="#6d4fc4"/>
     </radialGradient>
 
     <!-- Suit body: soft round volume -->
-    <linearGradient id="p-suitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="po-suitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#a78bfa"/>
       <stop offset="55%" stop-color="#8b5cf6"/>
       <stop offset="100%" stop-color="#6d28d9"/>
@@ -3441,17 +3449,17 @@
     </linearGradient>
 
     <!-- Fur: round volume, fuzzy lilac -->
-    <radialGradient id="p-furGrad" cx="38%" cy="30%" r="75%">
+    <radialGradient id="po-furGrad" cx="38%" cy="30%" r="75%">
       <stop offset="0%" stop-color="#ded9ff"/>
       <stop offset="55%" stop-color="#c4b5fd"/>
       <stop offset="100%" stop-color="#9580ed"/>
     </radialGradient>
-    <linearGradient id="p-earOuter" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="po-earOuter" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#a78bfa"/>
       <stop offset="100%" stop-color="#7c3aed"/>
     </linearGradient>
 
-    <radialGradient id="p-blushGrad" cx="50%" cy="50%" r="50%">
+    <radialGradient id="po-blushGrad" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#f9a8d4" stop-opacity="0.75"/>
       <stop offset="100%" stop-color="#f9a8d4" stop-opacity="0"/>
     </radialGradient>
@@ -3483,9 +3491,9 @@
   <circle cx="140" cy="35" r="115" fill="none" stroke="rgba(168,85,247,0.2)" stroke-width="1.5" stroke-dasharray="6 5"/>
 
   <!-- ── Planet ── -->
-  <ellipse cx="140" cy="265" rx="95" ry="32" fill="url(#p-planetGrad)" filter="url(#softglow)"/>
+  <ellipse cx="140" cy="265" rx="95" ry="32" fill="url(#po-planetGrad)" filter="url(#softglow)"/>
   <ellipse cx="140" cy="261" rx="118" ry="15" fill="none" stroke="rgba(168,85,247,0.5)" stroke-width="3"/>
-  <ellipse cx="140" cy="261" rx="82" ry="11" fill="url(#p-planetGrad)"/>
+  <ellipse cx="140" cy="261" rx="82" ry="11" fill="url(#po-planetGrad)"/>
   <ellipse cx="100" cy="263" rx="11" ry="4" fill="rgba(0,0,0,0.2)"/>
   <ellipse cx="168" cy="271" rx="7" ry="3" fill="rgba(0,0,0,0.18)"/>
   <circle cx="186" cy="257" r="4.5" fill="rgba(0,0,0,0.15)"/>
@@ -3507,9 +3515,9 @@
         values="0 101 198; 6 101 198; 0 101 198; 0 101 198; 0 101 198; 6 101 198; 8 101 198; 4 101 198; 0 101 198; 0 101 198"
         keyTimes="0; 0.15; 0.3; 0.42; 0.52; 0.58; 0.62; 0.68; 0.75; 1"
         dur="3.4s" repeatCount="indefinite"/>
-      <path d="M101 198 Q80 202 73 220" stroke="url(#p-suitGrad)" stroke-width="24" stroke-linecap="round" fill="none"/>
+      <path d="M101 198 Q80 202 73 220" stroke="url(#po-suitGrad)" stroke-width="24" stroke-linecap="round" fill="none"/>
       <circle cx="71" cy="223" r="15" fill="#ded9ff"/>
-      <circle cx="71" cy="223" r="15" fill="url(#p-furGrad)" opacity="0.5"/>
+      <circle cx="71" cy="223" r="15" fill="url(#po-furGrad)" opacity="0.5"/>
       <ellipse cx="62" cy="217" rx="5.5" ry="4" fill="#ded9ff" transform="rotate(-25,62,217)"/>
     </g>
 
@@ -3519,9 +3527,9 @@
         values="0 179 198; 0 179 198; 0 179 198; -28 179 198; -32 179 198; -20 179 198; 0 179 198; 0 179 198; 0 179 198"
         keyTimes="0; 0.3; 0.42; 0.52; 0.56; 0.65; 0.75; 0.88; 1"
         dur="3.4s" repeatCount="indefinite"/>
-      <path d="M179 198 Q200 202 207 220" stroke="url(#p-suitGrad)" stroke-width="24" stroke-linecap="round" fill="none"/>
+      <path d="M179 198 Q200 202 207 220" stroke="url(#po-suitGrad)" stroke-width="24" stroke-linecap="round" fill="none"/>
       <circle cx="209" cy="223" r="15" fill="#ded9ff"/>
-      <circle cx="209" cy="223" r="15" fill="url(#p-furGrad)" opacity="0.5"/>
+      <circle cx="209" cy="223" r="15" fill="url(#po-furGrad)" opacity="0.5"/>
       <ellipse cx="218" cy="217" rx="5.5" ry="4" fill="#ded9ff" transform="rotate(25,218,217)"/>
     </g>
 
@@ -3536,9 +3544,9 @@
     </g>
 
     <!-- LEGS: three overlapping ellipses merged into one smooth lower silhouette -->
-    <ellipse cx="119" cy="256" rx="24" ry="22" fill="url(#p-suitGrad)"/>
-    <ellipse cx="161" cy="256" rx="24" ry="22" fill="url(#p-suitGrad)"/>
-    <ellipse cx="140" cy="250" rx="22" ry="20" fill="url(#p-suitGrad)"/>
+    <ellipse cx="119" cy="256" rx="24" ry="22" fill="url(#po-suitGrad)"/>
+    <ellipse cx="161" cy="256" rx="24" ry="22" fill="url(#po-suitGrad)"/>
+    <ellipse cx="140" cy="250" rx="22" ry="20" fill="url(#po-suitGrad)"/>
     <ellipse cx="112" cy="248" rx="7.5" ry="5" fill="#c4b5fd" opacity="0.55"/>
     <ellipse cx="154" cy="248" rx="7.5" ry="5" fill="#c4b5fd" opacity="0.55"/>
 
@@ -3549,7 +3557,7 @@
              C145 253.5 135 253.5 122 252
              C100 250 88 240 88 218
              C88 192 108 172 140 172 Z"
-          fill="url(#p-suitGrad)"/>
+          fill="url(#po-suitGrad)"/>
     <!-- body highlight -->
     <ellipse cx="115" cy="196" rx="22" ry="18" fill="url(#suitGradLight)" opacity="0.55"/>
 
@@ -3575,9 +3583,9 @@
         dur="3s" repeatCount="indefinite"/>
 
     <!-- ears (rounder, peeking out above/beside helmet rim) -->
-    <path d="M96 96 C84 70 90 48 108 60 C118 67 121 86 112 99 Z" fill="url(#p-earOuter)"/>
+    <path d="M96 96 C84 70 90 48 108 60 C118 67 121 86 112 99 Z" fill="url(#po-earOuter)"/>
     <path d="M100 91 C93 72 98 56 110 64 C117 70 118 84 110 94 Z" fill="#ded9ff"/>
-    <path d="M184 96 C196 70 190 48 172 60 C162 67 159 86 168 99 Z" fill="url(#p-earOuter)"/>
+    <path d="M184 96 C196 70 190 48 172 60 C162 67 159 86 168 99 Z" fill="url(#po-earOuter)"/>
     <path d="M180 91 C187 72 182 56 170 64 C163 70 162 84 170 94 Z" fill="#ded9ff"/>
 
     <!-- HELMET OUTER RIM -->
@@ -3585,10 +3593,10 @@
     <circle cx="140" cy="132" r="66" fill="none" stroke="rgba(168,85,247,0.7)" stroke-width="3"/>
 
     <!-- HELMET GLASS -->
-    <circle cx="140" cy="132" r="59" fill="url(#p-helmetGlass)"/>
+    <circle cx="140" cy="132" r="59" fill="url(#po-helmetGlass)"/>
 
     <!-- CAT HEAD (fills most of helmet, big round chibi shape) -->
-    <ellipse cx="140" cy="138" rx="46" ry="42" fill="url(#p-furGrad)"/>
+    <ellipse cx="140" cy="138" rx="46" ry="42" fill="url(#po-furGrad)"/>
 
     <!-- cheek fluff -->
     <ellipse cx="103" cy="150" rx="11" ry="9" fill="#ded9ff" opacity="0.7"/>
@@ -3606,8 +3614,8 @@
     <circle id="vex-iris-l" cx="123" cy="136" r="9" fill="#0d9488"/>
     <circle id="vex-iris-r" cx="157" cy="136" r="9" fill="#0d9488"/>
 
-    <ellipse id="p-vex-pupil-l" cx="123" cy="137" rx="5" ry="7" fill="#0a0a1a"/>
-    <ellipse id="p-vex-pupil-r" cx="157" cy="137" rx="5" ry="7" fill="#0a0a1a"/>
+    <ellipse id="po-pupil-l" cx="123" cy="137" rx="5" ry="7" fill="#0a0a1a"/>
+    <ellipse id="po-pupil-r" cx="157" cy="137" rx="5" ry="7" fill="#0a0a1a"/>
 
     <circle cx="118" cy="130" r="3.4" fill="white"/>
     <circle cx="152" cy="130" r="3.4" fill="white"/>
@@ -3622,8 +3630,8 @@
     <path id="vex-brow-r" d="M150 121 Q157 118 166 122" stroke="#7c3aed" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.75"/>
 
     <!-- blush -->
-    <ellipse id="vex-blush-l" cx="106" cy="148" rx="12" ry="7.5" fill="url(#p-blushGrad)" opacity="0"/>
-    <ellipse id="vex-blush-r" cx="174" cy="148" rx="12" ry="7.5" fill="url(#p-blushGrad)" opacity="0"/>
+    <ellipse id="vex-blush-l" cx="106" cy="148" rx="12" ry="7.5" fill="url(#po-blushGrad)" opacity="0"/>
+    <ellipse id="vex-blush-r" cx="174" cy="148" rx="12" ry="7.5" fill="url(#po-blushGrad)" opacity="0"/>
 
     <!-- nose -->
     <path d="M136 150 Q140 147 144 150 L140 154 Z" fill="#f9a8d4"/>
@@ -3685,25 +3693,21 @@
   </g>
 
   <!-- BLINK layers -->
-  <ellipse cx="123" cy="136" rx="14" ry="13.5" fill="url(#p-furGrad)"
+  <ellipse cx="123" cy="136" rx="14" ry="13.5" fill="url(#po-furGrad)"
            style="transform-origin:123px 136px; animation: blink 5s ease-in-out infinite"/>
-  <ellipse cx="157" cy="136" rx="14" ry="13.5" fill="url(#p-furGrad)"
+  <ellipse cx="157" cy="136" rx="14" ry="13.5" fill="url(#po-furGrad)"
            style="transform-origin:157px 136px; animation: blink 5s ease-in-out infinite .07s"/>
-
-        </g>
       </svg>
     </div>
 
     <!-- typewriter text -->
     <div id="puo-text-area">
       <div id="puo-title"></div>
+      <div id="puo-text-sparks"></div>
     </div>
 
-    <!-- text spark container -->
-    <div id="puo-text-sparks" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
-
-    <!-- lanjutkan button -->
-    <button id="puo-btn" onclick="closePuoOverlay()">LANJUTKAN ✦</button>
+    <!-- CTA button -->
+    <button id="puo-btn" onclick="closeProUnlockedModal()">LANJUTKAN ✦</button>
   </div>
 
   <!-- ── Badge Unlock Modal ── -->
@@ -5152,19 +5156,9 @@
   async function saveUserData(patch) {
     const uid = window._auth.currentUser?.uid;
     if (!uid) return;
-    const { doc, setDoc, updateDoc } = window._dbFns;
+    const { doc, setDoc } = window._dbFns;
     try {
-      // updateDoc supports dot-notation for nested fields; setDoc+merge does not.
-      // Try updateDoc first, fall back to setDoc+merge for new documents.
-      try {
-        await updateDoc(doc(window._db, 'users', uid), patch);
-      } catch(e) {
-        if (e.code === 'not-found') {
-          await setDoc(doc(window._db, 'users', uid), patch, { merge: true });
-        } else {
-          throw e;
-        }
-      }
+      await setDoc(doc(window._db, 'users', uid), patch, { merge: true });
     } catch(e) {
       console.error('saveUserData error:', e);
     }
@@ -7429,187 +7423,96 @@
   ═══════════════════════════════════════════════════ */
   function showProUnlockedModal() { showPuoOverlay(); }
 
-  /* Canvas speed-line renderer — runs during skydive phase only */
-  let _puoCanvasAnim = null;
-  function startPuoSpeedLines(canvas, cx, cy, durationMs) {
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width  = canvas.offsetWidth  * dpr;
-    canvas.height = canvas.offsetHeight * dpr;
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    const W = canvas.offsetWidth, H = canvas.offsetHeight;
-    const start = performance.now();
-
-    // Pre-generate lines so they look consistent
-    const lines = Array.from({length: 28}, (_, i) => ({
-      x: cx + (Math.random() - 0.5) * W * 0.9,
-      speed: 0.6 + Math.random() * 1.2,
-      width: 0.6 + Math.random() * 1.8,
-      alpha: 0.15 + Math.random() * 0.55,
-      color: i % 4 === 0 ? '45,212,191' : i % 3 === 0 ? '255,255,255' : '168,85,247',
-      phase: Math.random(),
-    }));
-
-    function frame(now) {
-      const elapsed = now - start;
-      const progress = Math.min(1, elapsed / durationMs);
-      // Speed peaks in the middle, eases in and out
-      const speed = Math.sin(progress * Math.PI) * 1.4 + 0.1;
-
-      ctx.clearRect(0, 0, W, H);
-
-      lines.forEach(l => {
-        // Each line streams from top to just above Vex center
-        const len = (80 + l.speed * 120) * speed;
-        const yEnd = cy * (0.3 + l.phase * 0.4) + elapsed * l.speed * 0.18 * speed;
-        const yStart = yEnd - len;
-        if (yEnd < 0 || yStart > cy) return;
-
-        ctx.strokeStyle = `rgba(${l.color},${l.alpha * speed * 0.8})`;
-        ctx.lineWidth = l.width;
-        ctx.beginPath();
-        ctx.moveTo(l.x, yStart);
-        ctx.lineTo(l.x, yEnd);
-        ctx.stroke();
-      });
-
-      if (progress < 1) {
-        _puoCanvasAnim = requestAnimationFrame(frame);
-      } else {
-        ctx.clearRect(0, 0, W, H);
-      }
-    }
-    _puoCanvasAnim = requestAnimationFrame(frame);
-  }
-
-  function stopPuoSpeedLines(canvas) {
-    if (_puoCanvasAnim) { cancelAnimationFrame(_puoCanvasAnim); _puoCanvasAnim = null; }
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-  }
+  let _puoBlinkTimer = null;
 
   function showPuoOverlay() {
     const ov      = document.getElementById('pro-unlock-overlay');
     const glow    = document.getElementById('puo-glow');
     const parts   = document.getElementById('puo-particles');
-    const trail   = document.getElementById('puo-trail');
-    const canvas  = document.getElementById('puo-canvas');
     const vexWrap = document.getElementById('puo-vex-wrap');
+    const vexSvg  = document.getElementById('puo-vex-svg');
+    const crown   = document.getElementById('puo-crown');
     const title   = document.getElementById('puo-title');
     const btn     = document.getElementById('puo-btn');
-    const sparks  = document.getElementById('puo-text-sparks');
-    const stars   = document.getElementById('puo-stars');
 
     if (!ov) return;
 
     /* ── RESET ── */
     ov.classList.add('active');
-    ov.style.opacity = '1';
-    glow.style.cssText = 'opacity:0; transform:translate(-50%,-50%) scale(0); animation:none;';
     parts.innerHTML = '';
-    if (trail) { trail.innerHTML = ''; trail.classList.remove('active'); }
-    if (sparks) sparks.innerHTML = '';
-    // Vex starts far above, upright (no rotate), tiny
-    vexWrap.style.cssText = 'opacity:0; transform:translate(-50%,-340%) scale(0.22) rotate(-6deg); animation:none;';
-    void vexWrap.offsetWidth;
-    title.textContent = '';
-    btn.style.cssText = 'opacity:0; animation:none; pointer-events:none;';
-    if (stars) stars.setAttribute('opacity', '0');
-    ov.querySelectorAll('.puo-ring, .puo-land-ring').forEach(r => r.remove());
+    glow.style.cssText = 'opacity:0;transform:translate(-50%,-50%) scale(0);animation:none;';
+    vexWrap.style.cssText = 'opacity:0;transform:translate(-50%,-50%) translateY(40px) scale(0.88);animation:none;will-change:transform,opacity;';
+    if (vexSvg) vexSvg.style.transform = 'scaleX(1) scaleY(1)';
+    crown.style.cssText = 'opacity:0;transform:translateX(-50%) translateY(-220px) rotate(-8deg);animation:none;will-change:transform,opacity;';
+    title.style.cssText = 'opacity:0;transform:translateY(10px) scale(0.92);animation:none;';
+    title.textContent = 'GALACTIC PRO';
+    btn.style.cssText = 'opacity:0;animation:none;pointer-events:none;';
     if (_puoBlinkTimer) { clearTimeout(_puoBlinkTimer); _puoBlinkTimer = null; }
-    stopPuoSpeedLines(canvas);
 
-    const W = window.innerWidth;
-    const H = window.innerHeight;
-    const cx = W / 2;
-    const cy = H / 2;
+    const W = window.innerWidth, H = window.innerHeight;
+    const cx = W / 2, cy = H / 2;
 
-    /* ── PHASE 1: Blackout 0-1s, glow hints ── */
+    /* ── PHASE 1: layar gelap 1s ── */
+
+    /* ── PHASE 2: Vex muncul smooth dari bawah (1s) ── */
     setTimeout(() => {
-      void glow.offsetWidth;
-      glow.style.animation = 'puo-glow-in 1s cubic-bezier(.22,1,.36,1) forwards';
-    }, 800);
-
-    /* ── PHASE 2: VEX SKYDIVE 1.5s ── */
-    setTimeout(() => {
-      // Canvas speed lines — render realtime vertical streaks rushing toward center
-      if (canvas) startPuoSpeedLines(canvas, cx, cy, 1400);
-
-      // Start skydive — Vex upright, skydive pose, rockets from top
       void vexWrap.offsetWidth;
-      vexWrap.style.animation = 'puo-vex-skydive 1.15s cubic-bezier(.22,1,.36,1) forwards';
-    }, 1500);
+      vexWrap.style.animation = 'puo-vex-enter 0.9s cubic-bezier(.22,1,.36,1) forwards';
+      // Glow muncul bersamaan, lembut
+      void glow.offsetWidth;
+      glow.style.animation = 'puo-glow-in 1.2s ease-out forwards';
+    }, 1000);
 
-    /* ── PHASE 3: LANDING IMPACT 2.65s (when Vex hits center) ── */
+    /* ── PHASE 3: Mahkota jatuh dari atas (2.2s) ── */
     setTimeout(() => {
-      // Stop speed lines on landing
-      stopPuoSpeedLines(canvas);
+      void crown.offsetWidth;
+      crown.style.animation = 'puo-crown-fall 0.75s cubic-bezier(.22,1,.36,1) forwards';
+    }, 2200);
 
-      // 3 impact rings expanding outward from landing point
-      const ringDefs = [
-        { col: 'rgba(168,85,247,.9)', bw: 4, dur: .7,  delay: 0   },
-        { col: 'rgba(45,212,191,.6)', bw: 3, dur: .85, delay: 80  },
-        { col: 'rgba(255,255,255,.3)',bw: 2, dur: 1.0, delay: 180 },
-      ];
-      const landSz = Math.max(W, H) * 2.2;
-      ringDefs.forEach(({ col, bw, dur, delay }) => {
-        const r = document.createElement('div');
-        r.className = 'puo-land-ring';
-        r.style.cssText = `width:${landSz}px;height:${landSz}px;border:${bw}px solid ${col};animation:puo-land-ring ${dur}s cubic-bezier(.1,.6,.25,1) ${delay}ms forwards;`;
-        ov.appendChild(r);
-      });
+    /* ── PHASE 4: Landing impact — kepala kenyel + mahkota settle (2.95s) ── */
+    setTimeout(() => {
+      // Kepala Vex kenyel
+      if (vexSvg) {
+        vexSvg.style.transformOrigin = 'center bottom';
+        vexSvg.style.animation = 'puo-head-squash 0.5s cubic-bezier(.22,1,.36,1) forwards';
+      }
+      // Mahkota kenyel settle
+      crown.style.animation = 'puo-crown-settle 0.5s cubic-bezier(.22,1,.36,1) forwards';
 
-      // Burst particles — spread from center on landing
+      // Burst particles kecil dari area kepala
       for (let i = 0; i < 16; i++) {
         const p = document.createElement('div');
-        const angle = (i / 32) * Math.PI * 2 + Math.random() * 0.25;
-        const dist  = 50 + Math.random() * (Math.min(W, H) * 0.38);
-        const cols  = ['#a855f7','#2dd4bf','#fde68a','#f9a8d4','#fff'];
-        p.style.cssText = `position:absolute;border-radius:50%;width:${2+Math.random()*4.5}px;height:${2+Math.random()*4.5}px;background:${cols[i%cols.length]};left:${cx}px;top:${cy}px;--px:${Math.cos(angle)*dist}px;--py:${Math.sin(angle)*dist}px;animation:puo-particle-burst ${.55+Math.random()*.65}s cubic-bezier(.2,.8,.3,1) ${Math.random()*120}ms forwards;`;
+        const angle = (i / 16) * Math.PI * 2;
+        const dist = 30 + Math.random() * 80;
+        const cols = ['#fde68a','#f59e0b','#a855f7','#2dd4bf','#fff'];
+        p.style.cssText = `position:absolute;border-radius:50%;width:${2+Math.random()*3.5}px;height:${2+Math.random()*3.5}px;background:${cols[i%cols.length]};left:${cx}px;top:${cy*0.38}px;--px:${Math.cos(angle)*dist}px;--py:${Math.sin(angle)*dist}px;animation:puo-particle-burst ${.4+Math.random()*.5}s cubic-bezier(.2,.8,.3,1) ${Math.random()*80}ms forwards;`;
         parts.appendChild(p);
       }
+    }, 2950);
 
-      // Glow flares up on landing
-      void glow.offsetWidth;
-      glow.style.animation = 'puo-glow-in .4s ease-out forwards';
-    }, 2650);
-
-    /* ── PHASE 4: IDLE FLOAT + ambient particles 3.2s ── */
+    /* ── PHASE 5: Idle float (3.5s) ── */
     setTimeout(() => {
-      vexWrap.style.opacity = '1';
-      vexWrap.style.transform = 'translate(-50%, -50%) scale(1) rotate(0deg)';
       vexWrap.style.animation = 'puo-vex-float 4s ease-in-out infinite';
-      glow.style.animation = 'puo-glow-breathe 3s ease-in-out infinite';
-      if (stars) stars.setAttribute('opacity', '1');
+      crown.style.animation   = 'puo-crown-float 4s ease-in-out infinite';
+      glow.style.animation    = 'puo-glow-breathe 3s ease-in-out infinite';
+      if (vexSvg) vexSvg.style.animation = '';
       puoStartBlink();
-
-      // Ambient floating particles
-      for (let i = 0; i < 8; i++) {
+      // Ambient sparkles
+      for (let i = 0; i < 10; i++) {
         const cols = ['#a855f7','#2dd4bf','#fde68a'];
         const p = document.createElement('div');
-        p.style.cssText = `position:absolute;border-radius:50%;width:${1.5+Math.random()*2.5}px;height:${1.5+Math.random()*2.5}px;background:${cols[i%3]};left:${Math.random()*W}px;top:${Math.random()*H}px;opacity:0;--sx:${(Math.random()-.5)*40}px;--sy:${-12-Math.random()*45}px;animation:puo-spark-float ${2+Math.random()*2.5}s ease-out ${Math.random()*2.5}s forwards;`;
+        p.style.cssText = `position:absolute;border-radius:50%;width:${1.5+Math.random()*2}px;height:${1.5+Math.random()*2}px;background:${cols[i%3]};left:${Math.random()*W}px;top:${Math.random()*H}px;opacity:0;--sx:${(Math.random()-.5)*35}px;--sy:${-12-Math.random()*40}px;animation:puo-spark-float ${2+Math.random()*2}s ease-out ${Math.random()*2}s forwards;`;
         parts.appendChild(p);
       }
-    }, 3200);
+    }, 3500);
 
-    /* ── PHASE 5: TYPEWRITER 4.5-8s ── */
-    const fullText = 'GALACTIC PRO';
-    let charIdx = 0;
-    const charDelay = 3500 / fullText.length;
-    function typeNextChar() {
-      if (charIdx > fullText.length) return;
-      title.textContent = fullText.slice(0, charIdx);
-      charIdx++;
-      if (charIdx <= fullText.length) {
-        setTimeout(typeNextChar, charDelay);
-        if ([0,2,4,5,6,11].includes(charIdx - 1)) setTimeout(() => spawnTextSparks(charIdx - 1), 80);
-      }
-    }
-    setTimeout(typeNextChar, 4500);
+    /* ── PHASE 6: Judul "GALACTIC PRO" muncul (4.2s) ── */
+    setTimeout(() => {
+      void title.offsetWidth;
+      title.style.animation = 'puo-title-in 0.7s cubic-bezier(.22,1,.36,1) forwards';
+    }, 4200);
 
-    /* ── PHASE 6: BUTTON 8s ── */
+    /* ── PHASE 7: Tombol muncul (5.2s) ── */
     setTimeout(() => {
       btn.style.animation = 'puo-btn-in .6s cubic-bezier(.22,1,.36,1) forwards';
       setTimeout(() => {
@@ -7617,41 +7520,8 @@
         btn.style.pointerEvents = 'auto';
         btn.style.animation = 'puo-btn-breathe 2s ease-in-out infinite';
       }, 600);
-    }, 8000);
+    }, 5200);
   }
-
-  /* spawn tiny sparks around a character in the title */
-  function spawnTextSparks(charIdx) {
-    const title = document.getElementById('puo-title');
-    const sparks = document.getElementById('puo-text-sparks');
-    if (!title || !sparks) return;
-    const rect = title.getBoundingClientRect();
-    /* approximate x position of character */
-    const charWidth = rect.width / (title.textContent.length || 1);
-    const cx = rect.left + charWidth * charIdx + charWidth / 2;
-    const cy = rect.top + rect.height / 2;
-    const colors = ['#fde68a','#a855f7','#2dd4bf','#f9a8d4','#fff'];
-    for (let i = 0; i < 8; i++) {
-      const sp = document.createElement('div');
-      const size = 2 + Math.random() * 3;
-      const col = colors[Math.floor(Math.random() * colors.length)];
-      const angle = Math.random() * Math.PI * 2;
-      const dist = 15 + Math.random() * 35;
-      sp.className = 'puo-text-spark';
-      sp.style.cssText = `
-        width:${size}px; height:${size}px;
-        background:${col};
-        left:${cx}px; top:${cy}px;
-        --sx:${Math.cos(angle) * dist}px;
-        --sy:${Math.sin(angle) * dist - 20}px;
-        animation: puo-spark-float ${.5 + Math.random() * .6}s ease-out ${Math.random() * .15}s both;
-      `;
-      sparks.appendChild(sp);
-    }
-  }
-
-  /* idle blink for puo Vex */
-  let _puoBlinkTimer = null;
   function puoStartBlink() {
     function doBlink() {
       const bl = document.getElementById('puo-blink-l');
@@ -7839,12 +7709,11 @@
       if (currentLesson) {
         const key = `${currentLesson.unitNum}-${currentLesson.lessonNum}`;
         completedLessons.add(key);
-        console.log('[VexLingo] Lesson complete, key added:', key, '| completedLessons:', [...completedLessons]);
         const fsKey = `${selectedLanguage}:${key}`;
         _userCache.completedLessons = _userCache.completedLessons || {};
         _userCache.completedLessons[fsKey] = true;
-        const safeFsKey = fsKey.replace(/:/g, '__').replace(/-/g, '_');
-        await saveUserData({ [`completedLessons.${safeFsKey}`]: true });
+        // Use dot notation to avoid overwriting other completed lessons in Firestore
+        await saveUserData({ [`completedLessons.${fsKey}`]: true });
       }
 
       // Interstitial ad every 2 lessons this session (free users only)
@@ -7938,13 +7807,7 @@
     const saved = _userCache.completedLessons || {};
     completedLessons = new Set(
       Object.keys(saved)
-        .filter(k => saved[k])
-        .map(k => {
-          // Support both old format (en:1-1) and new safe format (en__1_1)
-          const decoded = k.replace(/__/g, ':').replace(/_(?=[0-9])/g, '-');
-          return decoded;
-        })
-        .filter(k => k.startsWith(lang + ':'))
+        .filter(k => k.startsWith(lang + ':') && saved[k])
         .map(k => k.slice(lang.length + 1))
     );
     updateStreakUI();
