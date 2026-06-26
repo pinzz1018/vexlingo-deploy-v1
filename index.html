@@ -8032,13 +8032,19 @@
 
       // Mark lesson as completed
       if (currentLesson) {
-        const key = `${currentLesson.unitNum}-${currentLesson.lessonNum}`;
-        completedLessons.add(key);
-        const fsKey = `${selectedLanguage}:${key}`;
-        _userCache.completedLessons = _userCache.completedLessons || {};
-        _userCache.completedLessons[fsKey] = true;
-        // Use dot notation to avoid overwriting other completed lessons in Firestore
-        await saveUserData({ [`completedLessons.${fsKey}`]: true });
+        try {
+          const key = `${currentLesson.unitNum}-${currentLesson.lessonNum}`;
+          completedLessons.add(key);
+          const fsKey = `${selectedLanguage}:${key}`;
+          _userCache.completedLessons = _userCache.completedLessons || {};
+          _userCache.completedLessons[fsKey] = true;
+          await saveUserData({ [`completedLessons.${fsKey}`]: true });
+          showToast(`✅ Lesson ${key} selesai & tersimpan!`, { icon: '✅', duration: 3000 });
+        } catch(e) {
+          showToast('❌ Gagal simpan progress: ' + e.message, { icon: '❌', duration: 6000 });
+        }
+      } else {
+        showToast('⚠️ currentLesson null — progress tidak tersimpan', { icon: '⚠️', duration: 5000 });
       }
 
       // Interstitial ad every 2 lessons this session (free users only)
