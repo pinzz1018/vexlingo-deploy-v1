@@ -10167,11 +10167,11 @@ Instruksi: Sesuaikan bahasa jawaban dengan bahasa yang user pakai.`;
     }
   }
 
-  // ── Web Search (otomatis, hanya untuk pertanyaan yang butuh info terkini) ──
+  // ── Web Search via Tool Calling (AI yang decide, bukan regex heuristik) ──
 
-  // Heuristik: tentukan apakah pesan user butuh web search atau cukup dijawab dari pengetahuan model.
-  // Tujuannya supaya TIDAK semua pesan kena search (boros & lambat), hanya yang relevan.
+  // Dummy shouldWebSearch — hanya dipakai S2S mode, tool calling handle sisanya
   function shouldWebSearch(text) {
+    // Untuk S2S mode, tetap pakai heuristik ringan
     const t = text.toLowerCase().trim();
     if (!t) return false;
 
@@ -10375,6 +10375,102 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
     return { contextText, sources };
   }
 
+  // ── Tool Calling: AI decide sendiri kapan perlu web search ──
+  async function askVexWithToolCalling_getSearch(userText, loadingId, hintEl, groqKey) {
+    const emptyResult = { contextText: '', sources: [] };
+
+    const webSearchTool = {
+      type: 'function',
+      function: {
+        name: 'web_search',
+        description: 'Search the web for real-time or recent information. USE this when user asks about: current events, news, viral topics, prices, exchange rates, weather, scores, status of a person (alive/dead/current role), new releases (games, films, music, apps, software versions), or anything that may have changed recently or after your knowledge cutoff. DO NOT use for: general knowledge, language/grammar questions, math, coding help, or casual conversation you can answer from training.',
+        parameters: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Optimized search query. Write like a Google search: short, specific, no filler words. Use the most relevant keywords only.'
+            }
+          },
+          required: ['query']
+        }
+      }
+    };
+
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          max_tokens: 150,
+          temperature: 0,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a search decision assistant. Your ONLY job: decide if the user\'s message needs a web search. If yes, call the web_search tool with an optimized query. If no, respond with exactly: NO_SEARCH. Do not answer the user\'s question.'
+            },
+            { role: 'user', content: userText }
+          ],
+          tools: [webSearchTool],
+          tool_choice: 'auto'
+        })
+      });
+
+      if (!res.ok) return emptyResult;
+      const data = await res.json();
+      const choice = data.choices?.[0];
+      if (!choice) return emptyResult;
+
+      // Model memutuskan tidak perlu search
+      if (choice.finish_reason !== 'tool_calls' || !choice.message?.tool_calls?.length) {
+        return emptyResult;
+      }
+
+      // Ambil query dari tool call
+      let query = userText;
+      try {
+        const args = JSON.parse(choice.message.tool_calls[0].function.arguments);
+        query = args.query?.trim() || userText;
+      } catch { /* pakai userText */ }
+
+      // Tampilkan shimmer UI
+      if (hintEl) hintEl.textContent = t('vex_searching_web');
+      const loadingEl = document.getElementById(loadingId);
+      if (loadingEl) {
+        loadingEl.className = 'vex-search-shimmer-wrap';
+        loadingEl.innerHTML = `<span class="vex-search-shimmer">${t('vex_searching_web_shimmer')}</span>`;
+      }
+
+      // Eksekusi search: Serper dulu, fallback DuckDuckGo
+      const searchResult = await vexWebSearch(query);
+
+      // Update shimmer
+      if (loadingEl) {
+        const found = searchResult?.sources?.length > 0 || searchResult?.found;
+        loadingEl.className = 'vex-search-shimmer-wrap';
+        loadingEl.innerHTML = `<span class="vex-search-shimmer">${found ? t('vex_search_found') : t('vex_search_not_found')}</span>`;
+        await new Promise(r => setTimeout(r, 700));
+        loadingEl.className = 'vex-chat-bubble loading';
+        loadingEl.innerHTML = '<div class="vex-typing-dots"><span></span><span></span><span></span></div>';
+      }
+      if (hintEl) hintEl.textContent = t('vex_waiting_answer');
+
+      if (!searchResult?.found && !searchResult?.summary) return emptyResult;
+
+      const sources = searchResult.sources?.length
+        ? searchResult.sources
+        : (searchResult.source ? [{ title: searchResult.source, link: searchResult.source }] : []);
+
+      const contextText = `[HASIL WEB SEARCH — ${sources.length} sumber ditemukan]\nQuery: ${query}\nRingkasan hasil pencarian:\n${searchResult.summary}\n\nCatatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP dan DETAIL. Olah jadi jawaban natural, jangan salin mentah-mentah. Tetap jujur kalau hasil kurang relevan, jangan mengarang. Tidak perlu sebutkan link sumber karena ditampilkan otomatis terpisah.`;
+
+      return { contextText, sources };
+    } catch (err) {
+      console.error('[vex-tool-calling] error:', err);
+      return emptyResult;
+    }
+  }
+
   // Deteksi apakah user minta dibuatkan soal/quiz bahasa custom (untuk tampilkan shimmer "Membuat N soal...")
   function shouldGenerateQuiz(text) {
     const t = text.toLowerCase().trim();
@@ -10452,19 +10548,11 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
     const vexMemoryContext = buildVexMemoryContext();
     const vexProgressContext = shouldProgressContext(userText) ? buildVexProgressContext() : '';
 
-    // Cek apakah pesan ini butuh web search; kalau iya, ganti bubble loading jadi teks shimmer "bentar mau cari di web dulu"
-    const needsSearch = shouldWebSearch(userText);
-    if (needsSearch) {
-      if (hint) hint.textContent = t('vex_searching_web');
-      const loadingEl = document.getElementById(loadingId);
-      if (loadingEl) {
-        loadingEl.className = 'vex-search-shimmer-wrap';
-        loadingEl.innerHTML = '<span class="vex-search-shimmer">' + t('vex_searching_web_shimmer') + '</span>';
-      }
-    }
+    // Tool calling: AI yang decide sendiri kapan perlu web search (shimmer UI dihandle di dalam fungsi)
+    const { contextText: vexSearchContext, sources: vexSearchSources } = await askVexWithToolCalling_getSearch(userText, loadingId, hint, key);
 
     // Cek apakah pesan ini minta dibuatkan soal/quiz; kalau iya, ganti bubble loading jadi bubble shimmer "Membuat N soal..."
-    const needsQuiz = !needsSearch && shouldGenerateQuiz(userText);
+    const needsQuiz = !vexSearchContext && shouldGenerateQuiz(userText);
     if (needsQuiz) {
       if (hint) hint.textContent = t('vex_generating_quiz');
       const loadingEl = document.getElementById(loadingId);
@@ -10472,30 +10560,6 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
         loadingEl.className = 'vex-chat-bubble vex';
         loadingEl.innerHTML = `<span class="vex-quiz-shimmer-text">${extractQuizShimmerLabel(userText)}</span>`;
       }
-    }
-    const { contextText: vexSearchContext, sources: vexSearchSources } = await buildVexSearchContext(userText);
-
-    // Search selesai: kalau ketemu hasil, tampilkan sebentar "udah ketemu" biar user tau prosesnya jalan,
-    // baru habis itu balik ke bubble titik-titik nunggu jawaban dari model.
-    if (needsSearch) {
-      const loadingEl = document.getElementById(loadingId);
-      if (loadingEl) {
-        const found = vexSearchSources && vexSearchSources.length > 0;
-        loadingEl.className = 'vex-search-shimmer-wrap';
-        loadingEl.innerHTML = `<span class="vex-search-shimmer">${found ? t('vex_search_found') : t('vex_search_not_found')}</span>`;
-        await new Promise(r => setTimeout(r, 700));
-      }
-    }
-
-    // Kembalikan ke bubble titik-titik sebelum lanjut menunggu jawaban dari model
-    // (biar transisi jelas: cari dulu, baru "mengetik")
-    if (needsSearch) {
-      const loadingEl = document.getElementById(loadingId);
-      if (loadingEl) {
-        loadingEl.className = 'vex-chat-bubble loading';
-        loadingEl.innerHTML = '<div class="vex-typing-dots"><span></span><span></span><span></span></div>';
-      }
-      if (hint) hint.textContent = t('vex_waiting_answer');
     }
 
     const _vexUser = window._auth?.currentUser;
