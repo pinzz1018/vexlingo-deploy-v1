@@ -4879,24 +4879,47 @@
 
     setTimeout(() => {
       inner.innerHTML = `
-        <div id="gems-icon" style="font-size:64px;margin-bottom:8px;opacity:0;filter:drop-shadow(0 0 24px rgba(45,212,191,.8));">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#2DD4BF" stroke="#0D9488" stroke-width=".5"/>
-            <path d="M2 7L12 12V22L2 7Z" fill="#0D9488"/>
-            <path d="M22 7L12 12V22L22 7Z" fill="#14B8A6"/>
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="url(#gem-shine)" opacity=".4"/>
+        <div id="gems-icon" style="margin-bottom:20px;opacity:0;">
+          <svg width="90" height="90" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <linearGradient id="gem-shine" x1="12" y1="2" x2="12" y2="12" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="white"/>
-                <stop offset="100%" stop-color="transparent"/>
+              <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#A7F3D0"/>
+                <stop offset="100%" stop-color="#0D9488"/>
               </linearGradient>
+              <linearGradient id="g2" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#2DD4BF"/>
+                <stop offset="100%" stop-color="#0F766E"/>
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
             </defs>
+            <g filter="url(#glow)">
+              <!-- top facet -->
+              <polygon points="20,4 8,14 20,18 32,14" fill="url(#g1)" opacity=".95"/>
+              <!-- left facet -->
+              <polygon points="8,14 20,18 14,34" fill="#0D9488"/>
+              <!-- right facet -->
+              <polygon points="32,14 20,18 26,34" fill="#14B8A6"/>
+              <!-- bottom facet -->
+              <polygon points="14,34 20,18 26,34" fill="#0F766E"/>
+              <!-- shine -->
+              <polygon points="20,4 14,12 20,14 26,12" fill="white" opacity=".25"/>
+            </g>
           </svg>
         </div>
-        <div id="gems-number" style="font-family:'Nunito',sans-serif;font-size:80px;font-weight:900;line-height:1;letter-spacing:-3px;background:linear-gradient(160deg,#A7F3D0,#2DD4BF,#0D9488);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0;transform:scale(.3) translateY(40px);">+0</div>
-        <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(45,212,191,.12);border:1.5px solid rgba(45,212,191,.35);border-radius:99px;padding:7px 20px;margin-top:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:#2DD4BF;opacity:0;animation:xp-fade-up .4s ease .6s both;" id="gems-pill">💎 Gems Didapat!</div>
-        <div style="margin-top:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,.4);opacity:0;animation:xp-fade-up .4s ease .75s both;" id="gems-sub">Perfect lesson! Kamu luar biasa! 🌟</div>
-        <div id="gems-tap-hint" style="position:absolute;bottom:60px;left:0;right:0;text-align:center;font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;color:rgba(255,255,255,.4);opacity:0;"></div>
+
+        <div style="font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#2DD4BF;opacity:0;margin-bottom:6px;animation:xp-fade-up .4s ease .05s both;">PERFECT LESSON</div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+          <div id="gems-number" style="font-family:'Nunito',sans-serif;font-size:72px;font-weight:900;line-height:1;letter-spacing:-2px;background:linear-gradient(160deg,#A7F3D0 0%,#2DD4BF 50%,#0D9488 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0;transform:scale(.4) translateY(20px);">+0</div>
+          <div style="font-family:'Nunito',sans-serif;font-size:28px;font-weight:900;color:#2DD4BF;opacity:0;padding-top:8px;animation:xp-fade-up .4s ease .5s both;">💎</div>
+        </div>
+
+        <div style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;color:rgba(255,255,255,.45);opacity:0;margin-top:4px;animation:xp-fade-up .4s ease .75s both;">${appLang==='id'?'Jawaban sempurna! Luar biasa 🌟':'Perfect answers! Amazing 🌟'}</div>
+
+        <div id="gems-tap-hint" style="position:absolute;bottom:52px;left:0;right:0;text-align:center;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,.35);opacity:0;"></div>
       `;
 
       // Update background ke teal
@@ -4909,16 +4932,16 @@
       // Animasi icon gem
       setTimeout(() => {
         const gemIcon = document.getElementById('gems-icon');
-        if(gemIcon) gemIcon.style.animation = 'xp-icon-pop .5s cubic-bezier(.34,1.56,.64,1) both';
-
+        if(gemIcon){
+          gemIcon.style.animation = 'xp-icon-pop .55s cubic-bezier(.34,1.56,.64,1) both';
+        }
         setTimeout(() => {
           const gemNum = document.getElementById('gems-number');
           if(gemNum) {
             gemNum.style.animation = 'xp-num-slam .55s cubic-bezier(.22,1,.36,1) both';
-            animateNumberTo(0, gems, 1200, val => {
+            animateNumberTo(0, gems, 1100, val => {
               if(gemNum) gemNum.textContent = '+' + Math.round(val);
             }).then(() => {
-              // Tap hint
               const tapHint = document.getElementById('gems-tap-hint');
               if(tapHint) {
                 tapHint.textContent = appLang==='id' ? 'Ketuk untuk melanjutkan' : 'Tap to continue';
@@ -4931,8 +4954,8 @@
               setTimeout(() => overlay.addEventListener('click', onTap2), 100);
             });
           }
-        }, 300);
-      }, 100);
+        }, 250);
+      }, 80);
     }, 300);
   }
 
