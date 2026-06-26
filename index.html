@@ -2600,7 +2600,10 @@
         <div style="display:flex;gap:8px;flex:1;">
           <!-- Streak -->
           <div style="display:flex;align-items:center;gap:5px;background:rgba(251,146,60,.1);border:1.5px solid rgba(251,146,60,.25);border-radius:99px;padding:5px 12px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#FB923C"><path d="M12 2c1 3-2 4.5-2 7.5a4 4 0 0 0 8 0c0-1-.3-2-1-3 1.5 1 3 3.5 3 6.5a8 8 0 1 1-16 0c0-5 4-8 8-11z"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C13 5 10 6.5 10 9.5a4 4 0 0 0 8 0c0-1-.3-2-1-3 1.5 1 3 3.5 3 6.5a8 8 0 1 1-16 0c0-5 4-8 8-11z" fill="#FB923C"/>
+              <path d="M12 14c0 2 1.5 3 1.5 3s-4-1-4-4c0-2 2-3 2-3s-.5 2 .5 4z" fill="#FDE68A" opacity=".8"/>
+            </svg>
             <span id="streak-display" style="font-size:13px;font-weight:800;color:#FB923C;">0</span>
           </div>
           <!-- Gems -->
@@ -2638,8 +2641,42 @@
       <div id="map-unit-banner" style="position:relative;overflow:hidden;background:linear-gradient(135deg,#1A0533,#0B0718);border-bottom:1px solid rgba(124,58,237,.2);padding:20px 20px 24px;">
         <!-- BG glow -->
         <div style="position:absolute;right:-40px;top:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(124,58,237,.3),transparent 70%);pointer-events:none;"></div>
-        <!-- Vex mascot -->
-        <div style="position:absolute;right:16px;bottom:0;font-size:72px;line-height:1;opacity:.9;filter:drop-shadow(0 0 20px rgba(124,58,237,.6));">🐱</div>
+        <!-- Vex mascot SVG -->
+        <div style="position:absolute;right:12px;bottom:0;opacity:.95;filter:drop-shadow(0 0 16px rgba(124,58,237,.7));">
+          <svg width="90" height="90" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Body -->
+            <ellipse cx="50" cy="72" rx="28" ry="22" fill="#7C3AED"/>
+            <!-- Head -->
+            <circle cx="50" cy="46" r="26" fill="#A855F7"/>
+            <!-- Ears -->
+            <polygon points="24,28 18,10 36,22" fill="#A855F7"/>
+            <polygon points="76,28 82,10 64,22" fill="#A855F7"/>
+            <polygon points="26,27 21,14 35,23" fill="#F9A8D4"/>
+            <polygon points="74,27 79,14 65,23" fill="#F9A8D4"/>
+            <!-- Face -->
+            <!-- Eyes -->
+            <ellipse cx="40" cy="44" rx="6" ry="7" fill="white"/>
+            <ellipse cx="60" cy="44" rx="6" ry="7" fill="white"/>
+            <ellipse cx="41" cy="45" rx="4" ry="5" fill="#1A0533"/>
+            <ellipse cx="61" cy="45" rx="4" ry="5" fill="#1A0533"/>
+            <!-- Eye shine -->
+            <circle cx="43" cy="43" r="1.5" fill="white"/>
+            <circle cx="63" cy="43" r="1.5" fill="white"/>
+            <!-- Nose -->
+            <ellipse cx="50" cy="53" rx="3" ry="2" fill="#F9A8D4"/>
+            <!-- Mouth -->
+            <path d="M46 56 Q50 60 54 56" stroke="#1A0533" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <!-- Whiskers -->
+            <line x1="20" y1="52" x2="40" y2="54" stroke="white" stroke-width="1" opacity=".6"/>
+            <line x1="20" y1="56" x2="40" y2="56" stroke="white" stroke-width="1" opacity=".6"/>
+            <line x1="60" y1="54" x2="80" y2="52" stroke="white" stroke-width="1" opacity=".6"/>
+            <line x1="60" y1="56" x2="80" y2="56" stroke="white" stroke-width="1" opacity=".6"/>
+            <!-- Astronaut helmet ring -->
+            <circle cx="50" cy="46" r="28" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="2"/>
+            <!-- Space suit collar -->
+            <path d="M28 72 Q50 80 72 72" stroke="rgba(255,255,255,.2)" stroke-width="2" fill="none"/>
+          </svg>
+        </div>
         <div style="position:relative;z-index:1;max-width:220px;">
           <div id="map-greeting" style="font-size:11px;font-weight:700;color:#A855F7;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">Halo, <span id="user-name">Explorer</span>!</div>
           <div id="map-unit-title" style="font-size:20px;font-weight:900;color:#F0EEFF;line-height:1.2;margin-bottom:6px;">Unit 1</div>
@@ -2650,7 +2687,12 @@
               <div id="daily-goal-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#2DD4BF,#7C3AED);border-radius:99px;transition:width .4s;"></div>
             </div>
             <span id="daily-goal-count" style="font-size:11px;color:#8B7FA8;font-weight:700;white-space:nowrap;">0/3</span>
-            <div id="daily-goal-done" style="display:none;">✅</div>
+            <div id="daily-goal-done" style="display:none;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" fill="#22C55E"/>
+              <path d="M7 12l3.5 3.5L17 9" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
           </div>
         </div>
       </div>
@@ -6966,43 +7008,84 @@
         const cell = document.createElement('div');
         cell.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;';
 
-        // Circle button
-        const circle = document.createElement('div');
-        const size = isNext ? '72px' : '60px';
-        let circleBg, circleIcon, circleShadow;
+        // Circle button — 3D Duolingo style
+        const circleWrap = document.createElement('div');
+        circleWrap.style.cssText = 'position:relative;';
+
+        const size = isNext ? '72px' : '62px';
+        const sizeN = isNext ? 72 : 62;
+
+        let topColor, botColor, iconSvg, glowColor, shadowColor;
 
         if(isDone) {
-          circleBg = `background:linear-gradient(135deg,#2DD4BF,#0D9488);`;
-          circleIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-          circleShadow = 'box-shadow:0 4px 20px rgba(45,212,191,.35);';
+          topColor = 'linear-gradient(160deg,#34D399,#059669)';
+          botColor = '#065F46';
+          glowColor = 'rgba(52,211,153,.4)';
+          shadowColor = '#047857';
+          iconSvg = `<svg width="${isNext?28:22}" height="${isNext?28:22}" viewBox="0 0 24 24" fill="none">
+            <path d="M4 13l5 5L20 7" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>`;
         } else if(isNext) {
-          circleBg = `background:linear-gradient(135deg,#7C3AED,#A855F7);`;
-          circleIcon = `<svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>`;
-          circleShadow = 'box-shadow:0 4px 24px rgba(124,58,237,.6);animation:al-pulse 2s ease-in-out infinite;';
+          topColor = 'linear-gradient(160deg,#A855F7,#7C3AED)';
+          botColor = '#4C1D95';
+          glowColor = 'rgba(168,85,247,.5)';
+          shadowColor = '#3B0764';
+          iconSvg = `<svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+            <path d="M8 5.5v13l10.5-6.5L8 5.5z"/>
+          </svg>`;
         } else if(isUnlocked) {
-          circleBg = `background:rgba(124,58,237,.2);border:2px solid rgba(124,58,237,.4);`;
-          circleIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7z" fill="rgba(168,85,247,.8)"/></svg>`;
-          circleShadow = '';
+          topColor = 'linear-gradient(160deg,#6D28D9,#4C1D95)';
+          botColor = '#2E1065';
+          glowColor = 'none';
+          shadowColor = '#1E0A4A';
+          iconSvg = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" fill="rgba(168,85,247,.9)"/>
+          </svg>`;
         } else {
-          circleBg = `background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.08);`;
-          circleIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
-          circleShadow = '';
+          topColor = 'linear-gradient(160deg,#1F1635,#160D2A)';
+          botColor = '#0B0718';
+          glowColor = 'none';
+          shadowColor = '#0B0718';
+          iconSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="2" stroke-linecap="round">
+            <rect x="3" y="11" width="18" height="11" rx="2.5"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>`;
         }
 
-        circle.style.cssText = `width:${size};height:${size};border-radius:50%;${circleBg}${circleShadow}display:flex;align-items:center;justify-content:center;cursor:${isUnlocked?'pointer':'default'};transition:transform .15s;`;
-        circle.innerHTML = circleIcon;
+        // Bottom shadow layer (3D effect)
+        const shadow3d = document.createElement('div');
+        shadow3d.style.cssText = `position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:${sizeN}px;height:${sizeN}px;border-radius:50%;background:${shadowColor};z-index:0;`;
+        circleWrap.appendChild(shadow3d);
+
+        // Top circle
+        const circle = document.createElement('div');
+        const pulseAnim = isNext ? 'animation:al-pulse 2s ease-in-out infinite;' : '';
+        circle.style.cssText = `position:relative;z-index:1;width:${size};height:${size};border-radius:50%;background:${topColor};display:flex;align-items:center;justify-content:center;cursor:${isUnlocked?'pointer':'default'};transform:translateY(-4px);transition:transform .1s cubic-bezier(.4,0,.2,1);${glowColor!=='none'?`box-shadow:0 6px 20px ${glowColor};`:''}${pulseAnim}`;
+        circle.innerHTML = iconSvg;
+        circleWrap.appendChild(circle);
+
         if(isUnlocked) {
-          circle.onclick = () => startLesson(unitNum, lessonNum);
-          circle.onmousedown = () => circle.style.transform='scale(.93)';
-          circle.onmouseup = () => circle.style.transform='scale(1)';
+          circle.addEventListener('pointerdown', () => {
+            circle.style.transform = 'translateY(-1px)';
+            shadow3d.style.transform = 'translateX(-50%) scaleY(.7)';
+          });
+          const release = () => {
+            circle.style.transform = 'translateY(-4px)';
+            shadow3d.style.transform = 'translateX(-50%)';
+          };
+          circle.addEventListener('pointerup', release);
+          circle.addEventListener('pointerleave', release);
+          circle.addEventListener('click', () => startLesson(unitNum, lessonNum));
         }
+
+        const circle_placeholder = circleWrap; // alias for append below
 
         // Label
         const label = document.createElement('div');
         label.style.cssText = `font-size:11px;font-weight:700;color:${isUnlocked?'#F0EEFF':'#4B5563'};text-align:center;line-height:1.3;`;
         label.textContent = lesson.name;
 
-        cell.appendChild(circle);
+        cell.appendChild(circle_placeholder);
         cell.appendChild(label);
         grid.appendChild(cell);
       });
