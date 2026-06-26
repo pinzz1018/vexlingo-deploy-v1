@@ -7983,8 +7983,7 @@
         document.getElementById('res-emoji').textContent = perfect?'🏆':acc>=60?'🎉':'😅';
         document.getElementById('res-title').textContent = perfect?'Sempurna!':acc>=60?'Bagus!':'Coba lagi!';
         document.getElementById('res-sub').textContent = quizScore+' dari '+total+' soal benar';
-        const xpNum = document.getElementById('quiz-final-xp-num');
-        document.getElementById('res-xp').textContent = '+'+(xpNum?xpNum.textContent:'0');
+        document.getElementById('res-xp').textContent = '+?';
         document.getElementById('res-acc').textContent = acc+'%';
         document.getElementById('res-err').textContent = (total-quizScore);
       }
@@ -8060,6 +8059,7 @@
       if (perfect) xpGained += XP_REWARDS.perfect;
       if (noHint)  xpGained += XP_REWARDS.noHint;
       await gainXP(xpGained, 'lesson');
+      const resXpEl = document.getElementById('res-xp'); if(resXpEl) resXpEl.textContent = '+'+xpGained;
 
       // Daily goal
       await incrementDailyGoal();
@@ -8099,6 +8099,9 @@
 
       // Update XP UI on result screen
       updateXpUI(null, _userCache.xp || 0);
+
+      // Re-render map biar lesson unlock terupdate setelah semua async selesai
+      renderMap();
       return;
     }
     renderQuestion();
