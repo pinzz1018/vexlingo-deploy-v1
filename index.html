@@ -3836,7 +3836,17 @@
     <canvas id="xp-particle-canvas"></canvas>
     <div class="xp-ov-glow"></div>
     <div class="xp-ov-inner">
-      <div class="xp-ov-bolt">⚡</div>
+      <div class="xp-ov-bolt" id="xp-ov-bolt">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bolt-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#FDE68A"/>
+              <stop offset="100%" stop-color="#F59E0B"/>
+            </linearGradient>
+          </defs>
+          <path d="M13 2L4.5 13.5H11.5L11 22L19.5 10.5H12.5L13 2Z" fill="url(#bolt-grad)" stroke="#FACC15" stroke-width="0.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
       <div class="xp-ov-number" id="xp-ov-number">+0</div>
       <div class="xp-ov-pill">✨ XP Didapat!</div>
       <div class="xp-ov-sub" id="xp-ov-sub">Terus semangat belajar!</div>
@@ -4936,6 +4946,17 @@
           if (!stillCurrent()) return;
           // Clear the backdrop blur first so the number flies crisply, not through frosted glass.
           overlay.classList.add('no-blur');
+          // Sembunyikan semua elemen kecuali angka XP
+          const bolt = document.getElementById('xp-ov-bolt');
+          const glow = overlay.querySelector('.xp-ov-glow');
+          const pill = overlay.querySelector('.xp-ov-pill');
+          const sub  = overlay.querySelector('.xp-ov-sub');
+          [bolt, glow, pill, sub].forEach(el => {
+            if(el) { el.style.transition='opacity .25s'; el.style.opacity='0'; }
+          });
+          // Background jadi transparan total
+          overlay.style.transition = 'background .3s';
+          overlay.style.background = 'transparent';
           setTimeout(() => {
             if (!stillCurrent()) return;
             flyXpNumberToBar(numberEl, overlay, fromXp, toXp, stillCurrent);
@@ -4966,6 +4987,21 @@
       dy = -window.innerHeight * .3;
     }
 
+    // Hide semua elemen kecuali numberEl saat fly dimulai
+    const bolt = overlay.querySelector('.xp-ov-bolt');
+    const pill = overlay.querySelector('.xp-ov-pill');
+    const sub = overlay.querySelector('.xp-ov-sub');
+    const glow = overlay.querySelector('.xp-ov-glow');
+    const canvas = overlay.querySelector('#xp-particle-canvas');
+    [bolt, pill, sub, glow, canvas].forEach(el => {
+      if (el) el.animate([{opacity:1},{opacity:0}], {duration:200, fill:'forwards'});
+    });
+    // Fade out background
+    overlay.animate([
+      {background:'rgba(11,7,24,.92)', backdropFilter:'blur(16px)'},
+      {background:'rgba(11,7,24,0)', backdropFilter:'blur(0px)'}
+    ], {duration:300, fill:'forwards'});
+
     const flightAnim = numberEl.animate(
       [
         { transform: 'translate(0,0) scale(1)', opacity: 1, offset: 0 },
@@ -4979,6 +5015,13 @@
     flightAnim.onfinish = () => {
       if (stillCurrent && !stillCurrent()) return; // a new lesson/overlay already took over — don't stomp on it
       overlay.classList.remove('show');
+      overlay.style.background = '';
+      overlay.style.transition = '';
+      // Reset semua elemen
+      ['xp-ov-bolt'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) { el.style.opacity=''; el.style.transition=''; }
+      });
       setTimeout(() => { overlay.style.display = 'none'; }, 500);
       // Land the gain: the bar/level chip update instantly, but the "x / y XP"
       // number counts up at a comfortable pace instead of snapping straight
