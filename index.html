@@ -4939,7 +4939,7 @@
 
         <div style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;color:rgba(255,255,255,.4);opacity:0;margin-top:8px;animation:xp-fade-up .4s ease .75s both;" id="gems-sub-text">${appLang==='id'?'Jawaban sempurna! Luar biasa 🌟':'Perfect answers! Amazing 🌟'}</div>
 
-        <div id="gems-tap-hint" style="position:absolute;bottom:52px;left:0;right:0;text-align:center;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,.35);opacity:0;"></div>
+
       `;
 
       // Update background ke teal
@@ -4965,11 +4965,16 @@
             animateNumberTo(0, gems, 1100, val => {
               if(gemNum) gemNum.textContent = '+' + Math.round(val);
             }).then(() => {
-              const tapHint = document.getElementById('gems-tap-hint');
-              if(tapHint) {
-                tapHint.textContent = appLang==='id' ? 'Ketuk untuk melanjutkan' : 'Tap to continue';
-                tapHint.style.animation = 'xp-fade-up .5s ease both, xp-tap-pulse 1.8s ease .5s infinite';
+              // Buat tap hint di overlay langsung (bukan di inner)
+              let gemsTapHint = document.getElementById('gems-tap-hint-el');
+              if(!gemsTapHint){
+                gemsTapHint = document.createElement('div');
+                gemsTapHint.id = 'gems-tap-hint-el';
+                gemsTapHint.style.cssText = 'position:absolute;bottom:52px;left:0;right:0;text-align:center;font-family:\'Nunito\',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,.35);opacity:0;';
+                overlay.appendChild(gemsTapHint);
               }
+              gemsTapHint.textContent = appLang==='id' ? 'Ketuk untuk melanjutkan' : 'Tap to continue';
+              gemsTapHint.style.animation = 'xp-fade-up .5s ease both, xp-tap-pulse 1.8s ease .5s infinite';
               const onTap2 = () => {
                 overlay.removeEventListener('click', onTap2);
                 closeXpOverlay(overlay, fromXp, toXp, stillCurrent);
