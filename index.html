@@ -8038,7 +8038,7 @@
           _userCache.completedLessons = _userCache.completedLessons || {};
           _userCache.completedLessons[fsKey] = true;
           await saveUserData({ [`completedLessons.${fsKey}`]: true });
-          showToast(`✅ Lesson ${key} selesai & tersimpan!`, { icon: '✅', duration: 3000 });
+          showToast(`✅ Saved: ${fsKey} | completedLessons size: ${completedLessons.size}`, { icon: '✅', duration: 5000 });
         } catch(e) {
           showToast('❌ Gagal simpan progress: ' + e.message, { icon: '❌', duration: 6000 });
         }
@@ -8101,6 +8101,7 @@
       updateXpUI(null, _userCache.xp || 0);
 
       // Re-render map biar lesson unlock terupdate setelah semua async selesai
+      showToast(`🗺️ renderMap dipanggil. completedLessons: ${[...completedLessons].join(',')}`, { icon: '🗺️', duration: 6000 });
       renderMap();
       return;
     }
