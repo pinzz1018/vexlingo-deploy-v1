@@ -542,64 +542,78 @@
     /* ── XP Gain Full-Screen Overlay ──────────────────── */
     #xp-overlay {
       display: none; position: fixed; inset: 0; z-index: 2100;
-      align-items: center; justify-content: center;
-      background: radial-gradient(circle at 50% 42%, rgba(124,58,237,.32), rgba(11,7,24,.96) 65%);
-      backdrop-filter: blur(3px);
-      opacity: 0;
-      transition: opacity .5s ease, backdrop-filter .45s ease;
-      overflow: hidden;
-      pointer-events: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(11,7,24,.92);
+      backdrop-filter: blur(16px);
+      opacity: 0; transition: opacity .3s;
+      overflow: hidden; pointer-events: none;
     }
-    #xp-overlay.show { opacity: 1; }
-    /* Drop the background blur right before the number flies toward the bar,
-       so the flight reads crisp instead of smeared through frosted glass. */
+    #xp-overlay.show { opacity: 1; pointer-events: all; }
     #xp-overlay.no-blur { backdrop-filter: blur(0px); }
+
+    #xp-particle-canvas { position:absolute;inset:0;pointer-events:none;z-index:1; }
+
     .xp-ov-glow {
-      position: absolute; left: 50%; top: 42%; width: 320px; height: 320px;
-      transform: translate(-50%, -50%);
-      background: radial-gradient(circle, rgba(168,85,247,.45), rgba(124,58,237,.15) 55%, rgba(124,58,237,0) 70%);
-      filter: blur(10px);
-      opacity: 0;
+      position:absolute;left:50%;top:50%;width:340px;height:340px;
+      transform:translate(-50%,-50%);border-radius:50%;
+      background:radial-gradient(circle,rgba(250,204,21,.18) 0%,rgba(250,204,21,.05) 55%,transparent 72%);
+      opacity:0;z-index:1;
     }
-    #xp-overlay.show .xp-ov-glow { animation: xp-glow-breathe 1.4s ease-in-out infinite; }
-    @keyframes xp-glow-breathe {
-      0%, 100% { opacity: .5; transform: translate(-50%, -50%) scale(1); }
-      50%      { opacity: .8; transform: translate(-50%, -50%) scale(1.1); }
+    #xp-overlay.show .xp-ov-glow { animation:xp-glow-pulse 2s ease-in-out .2s infinite; }
+    @keyframes xp-glow-pulse {
+      0%,100%{opacity:.5;transform:translate(-50%,-50%) scale(1);}
+      50%{opacity:1;transform:translate(-50%,-50%) scale(1.18);}
     }
+
     .xp-ov-inner {
-      position: relative; z-index: 2;
-      display: flex; flex-direction: column; align-items: center;
-      text-align: center; padding: 24px;
+      position:relative;z-index:2;
+      display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px;
     }
     .xp-ov-bolt {
-      font-size: 38px; margin-bottom: 4px; opacity: 0;
-      filter: drop-shadow(0 0 12px rgba(168,85,247,.8));
+      font-size:60px;margin-bottom:12px;opacity:0;
+      filter:drop-shadow(0 0 24px rgba(250,204,21,.9));
     }
-    #xp-overlay.show .xp-ov-bolt { animation: xp-bolt-in .5s cubic-bezier(.34,1.56,.64,1) .05s both; }
-    @keyframes xp-bolt-in {
-      0%   { opacity: 0; transform: scale(.3) rotate(-20deg); }
-      100% { opacity: 1; transform: scale(1) rotate(0deg); }
+    #xp-overlay.show .xp-ov-bolt { animation:xp-icon-pop .5s cubic-bezier(.34,1.56,.64,1) .1s both; }
+    @keyframes xp-icon-pop {
+      0%{opacity:0;transform:scale(0) rotate(-30deg);}
+      70%{transform:scale(1.25) rotate(8deg);}
+      100%{opacity:1;transform:scale(1) rotate(0);}
     }
+
     .xp-ov-number {
-      font-family: 'Orbitron', monospace;
-      font-size: 64px; font-weight: 900;
-      color: #E9D8FF;
-      text-shadow: 0 0 26px rgba(168,85,247,.85), 0 0 10px rgba(124,58,237,.7), 0 0 4px rgba(255,255,255,.5);
-      opacity: 0; transform: scale(.5);
+      font-family:'Nunito',sans-serif;
+      font-size:88px;font-weight:900;line-height:1;letter-spacing:-3px;
+      background:linear-gradient(160deg,#FDE68A 0%,#FACC15 40%,#F59E0B 100%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      opacity:0;transform:scale(.3) translateY(40px);
+      filter:drop-shadow(0 4px 24px rgba(250,204,21,.4));
     }
-    #xp-overlay.show .xp-ov-number { animation: xp-num-in .5s cubic-bezier(.22,1,.36,1) .15s both; }
-    @keyframes xp-num-in {
-      0%   { opacity: 0; transform: scale(.4) translateY(20px); }
-      100% { opacity: 1; transform: scale(1) translateY(0); }
+    #xp-overlay.show .xp-ov-number { animation:xp-num-slam .6s cubic-bezier(.22,1,.36,1) .2s both; }
+    @keyframes xp-num-slam {
+      0%{opacity:0;transform:scale(.3) translateY(40px);}
+      65%{transform:scale(1.08) translateY(-6px);}
+      100%{opacity:1;transform:scale(1) translateY(0);}
     }
+
+    .xp-ov-pill {
+      display:inline-flex;align-items:center;gap:6px;
+      background:rgba(250,204,21,.12);
+      border:1.5px solid rgba(250,204,21,.35);
+      border-radius:99px;padding:7px 20px;margin-top:12px;
+      font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;
+      color:#FACC15;letter-spacing:.3px;opacity:0;
+    }
+    #xp-overlay.show .xp-ov-pill { animation:xp-fade-up .4s ease .55s both; }
+
     .xp-ov-sub {
-      margin-top: 10px; font-size: 13px; color: #C9BFE0;
-      letter-spacing: .5px; opacity: 0;
+      margin-top:8px;font-family:'Nunito',sans-serif;
+      font-size:13px;font-weight:600;color:rgba(255,255,255,.4);opacity:0;
     }
-    #xp-overlay.show .xp-ov-sub { animation: xp-fade-up .5s ease .35s both; }
+    #xp-overlay.show .xp-ov-sub { animation:xp-fade-up .4s ease .7s both; }
+
     @keyframes xp-fade-up {
-      0%   { opacity: 0; transform: translateY(8px); }
-      100% { opacity: 1; transform: translateY(0); }
+      0%{opacity:0;transform:translateY(10px);}
+      100%{opacity:1;transform:translateY(0);}
     }
 
     /* ── Layout ─────────────────────────────────────── */
@@ -3819,11 +3833,13 @@
 
   <!-- Full-screen XP gain overlay: counts up, then flies into the map's XP bar -->
   <div id="xp-overlay">
+    <canvas id="xp-particle-canvas"></canvas>
     <div class="xp-ov-glow"></div>
     <div class="xp-ov-inner">
-      <div class="xp-ov-bolt">✨</div>
+      <div class="xp-ov-bolt">⚡</div>
       <div class="xp-ov-number" id="xp-ov-number">+0</div>
-      <div class="xp-ov-sub" id="xp-ov-sub">XP didapat!</div>
+      <div class="xp-ov-pill">✨ XP Didapat!</div>
+      <div class="xp-ov-sub" id="xp-ov-sub">Terus semangat belajar!</div>
     </div>
   </div>
 
@@ -4816,6 +4832,71 @@
   // Sequence: overlay fades in -> big number counts 0 -> gained amount ->
   // that number flies toward the map's XP bar and shrinks/fades into it ->
   // overlay closes -> the real XP bar fills and gives a little bounce.
+  // ── XP PARTICLE CONFETTI ──
+  function xpLaunchParticles() {
+    const canvas = document.getElementById('xp-particle-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const colors = ['#FACC15','#FDE68A','#F59E0B','#A855F7','#7C3AED','#2DD4BF','#ffffff'];
+    const particles = [];
+    const count = 80;
+
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        vx: (Math.random() - 0.5) * 18,
+        vy: (Math.random() - 0.7) * 18,
+        size: Math.random() * 8 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        alpha: 1,
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 12,
+        shape: Math.random() > 0.5 ? 'rect' : 'circle',
+      });
+    }
+
+    let frame;
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let alive = false;
+      particles.forEach(p => {
+        if (p.alpha <= 0) return;
+        alive = true;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.4; // gravity
+        p.vx *= 0.98;
+        p.alpha -= 0.018;
+        p.rotation += p.rotSpeed;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        if (p.shape === 'rect') {
+          ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size/2, 0, Math.PI*2);
+          ctx.fill();
+        }
+        ctx.restore();
+      });
+      if (alive) frame = requestAnimationFrame(draw);
+    }
+    draw();
+
+    // Stop setelah 3 detik
+    setTimeout(() => {
+      cancelAnimationFrame(frame);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }, 3000);
+  }
+
   function showXpGainOverlay(fromXp, toXp) {
     const gained = toXp - fromXp;
     const overlay = document.getElementById('xp-overlay');
@@ -4836,7 +4917,13 @@
     numberEl.style.opacity = '1';
     overlay.classList.remove('no-blur');
     overlay.style.display = 'flex';
-    requestAnimationFrame(() => { if (stillCurrent()) overlay.classList.add('show'); });
+    requestAnimationFrame(() => {
+      if (stillCurrent()) {
+        overlay.classList.add('show');
+        // Jalankan particle confetti
+        xpLaunchParticles();
+      }
+    });
 
     setTimeout(() => {
       if (!stillCurrent()) return;
