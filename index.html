@@ -4876,6 +4876,9 @@
 
     inner.style.transition = 'opacity .3s';
     inner.style.opacity = '0';
+    // Sembunyikan tap hint XP overlay dulu
+    const xpTapHint = document.getElementById('xp-tap-hint');
+    if(xpTapHint) { xpTapHint.style.opacity='0'; xpTapHint.style.animation='none'; }
 
     setTimeout(() => {
       inner.innerHTML = `
@@ -4912,12 +4915,29 @@
 
         <div style="font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#2DD4BF;opacity:0;margin-bottom:6px;animation:xp-fade-up .4s ease .05s both;">PERFECT LESSON</div>
 
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:4px;">
           <div id="gems-number" style="font-family:'Nunito',sans-serif;font-size:72px;font-weight:900;line-height:1;letter-spacing:-2px;background:linear-gradient(160deg,#A7F3D0 0%,#2DD4BF 50%,#0D9488 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0;transform:scale(.4) translateY(20px);">+0</div>
-          <div style="font-family:'Nunito',sans-serif;font-size:28px;font-weight:900;color:#2DD4BF;opacity:0;padding-top:8px;animation:xp-fade-up .4s ease .5s both;">💎</div>
+          <div id="gems-svg-icon" style="opacity:0;flex-shrink:0;">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="dg1" x1="20" y1="4" x2="20" y2="36" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#A7F3D0"/>
+                  <stop offset="100%" stop-color="#0D9488"/>
+                </linearGradient>
+                <filter id="dglow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              </defs>
+              <g filter="url(#dglow)">
+                <polygon points="20,5 8,15 20,19 32,15" fill="url(#dg1)"/>
+                <polygon points="8,15 20,19 14,35" fill="#0D9488"/>
+                <polygon points="32,15 20,19 26,35" fill="#14B8A6"/>
+                <polygon points="14,35 20,19 26,35" fill="#0F766E"/>
+                <polygon points="20,5 14,13 20,15 26,13" fill="white" opacity=".3"/>
+              </g>
+            </svg>
+          </div>
         </div>
 
-        <div style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;color:rgba(255,255,255,.45);opacity:0;margin-top:4px;animation:xp-fade-up .4s ease .75s both;">${appLang==='id'?'Jawaban sempurna! Luar biasa 🌟':'Perfect answers! Amazing 🌟'}</div>
+        <div style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;color:rgba(255,255,255,.4);opacity:0;margin-top:8px;animation:xp-fade-up .4s ease .75s both;" id="gems-sub-text">${appLang==='id'?'Jawaban sempurna! Luar biasa 🌟':'Perfect answers! Amazing 🌟'}</div>
 
         <div id="gems-tap-hint" style="position:absolute;bottom:52px;left:0;right:0;text-align:center;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,.35);opacity:0;"></div>
       `;
@@ -4939,6 +4959,9 @@
           const gemNum = document.getElementById('gems-number');
           if(gemNum) {
             gemNum.style.animation = 'xp-num-slam .55s cubic-bezier(.22,1,.36,1) both';
+            // Animasi SVG gem icon bersamaan
+            const gemSvg = document.getElementById('gems-svg-icon');
+            if(gemSvg) gemSvg.style.animation = 'xp-fade-up .4s ease .3s both';
             animateNumberTo(0, gems, 1100, val => {
               if(gemNum) gemNum.textContent = '+' + Math.round(val);
             }).then(() => {
