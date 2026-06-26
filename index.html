@@ -5205,10 +5205,22 @@
   // Save user data cache to Firestore
   async function saveUserData(patch) {
     const uid = window._auth.currentUser?.uid;
+    const { doc, setDoc, updateDoc } = window._dbFns;
     if (!uid) return;
-    const { doc, setDoc } = window._dbFns;
     try {
-      await setDoc(doc(window._db, 'users', uid), patch, { merge: true });
+      // Kalau patch pakai dot notation (e.g. completedLessons.english:8-22),
+      // harus pakai updateDoc bukan setDoc+merge agar dot notation diproses benar
+      const hasDotNotation = Object.keys(patch).some(k => k.includes('.'));
+      if (hasDotNotation) {
+        try {
+          await updateDoc(doc(window._db, 'users', uid), patch);
+        } catch(e2) {
+          // Dokumen belum ada (user baru) → buat dulu pakai setDoc
+          await setDoc(doc(window._db, 'users', uid), patch, { merge: true });
+        }
+      } else {
+        await setDoc(doc(window._db, 'users', uid), patch, { merge: true });
+      }
     } catch(e) {
       console.error('saveUserData error:', e);
     }
@@ -8038,7 +8050,7 @@
           _userCache.completedLessons = _userCache.completedLessons || {};
           _userCache.completedLessons[fsKey] = true;
           await saveUserData({ [`completedLessons.${fsKey}`]: true });
-          showToast(`✅ Saved: ${fsKey} | completedLessons size: ${completedLessons.size}`, { icon: '✅', duration: 5000 });
+
         } catch(e) {
           showToast('❌ Gagal simpan progress: ' + e.message, { icon: '❌', duration: 6000 });
         }
@@ -8101,7 +8113,6 @@
       updateXpUI(null, _userCache.xp || 0);
 
       // Re-render map biar lesson unlock terupdate setelah semua async selesai
-      showToast(`🗺️ renderMap dipanggil. completedLessons: ${[...completedLessons].join(',')}`, { icon: '🗺️', duration: 6000 });
       renderMap();
       return;
     }
