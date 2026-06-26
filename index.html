@@ -615,6 +615,17 @@
       0%{opacity:0;transform:translateY(10px);}
       100%{opacity:1;transform:translateY(0);}
     }
+    @keyframes xp-tap-pulse {
+      0%,100%{opacity:.4;}
+      50%{opacity:.9;}
+    }
+    #xp-tap-hint {
+      position:absolute;bottom:60px;left:0;right:0;text-align:center;
+      font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;
+      color:rgba(255,255,255,.4);opacity:0;
+    }
+    #gems-icon { opacity:0; }
+    #gems-number { opacity:0; transform:scale(.3) translateY(40px); }
 
     /* ── Layout ─────────────────────────────────────── */
     .page {
@@ -3851,6 +3862,7 @@
       <div class="xp-ov-pill">✨ XP Didapat!</div>
       <div class="xp-ov-sub" id="xp-ov-sub">Terus semangat belajar!</div>
     </div>
+    <div id="xp-tap-hint"></div>
   </div>
 
 
@@ -4842,15 +4854,97 @@
   // Sequence: overlay fades in -> big number counts 0 -> gained amount ->
   // that number flies toward the map's XP bar and shrinks/fades into it ->
   // overlay closes -> the real XP bar fills and gives a little bounce.
+  // ── XP OVERLAY STATE ──
+  let _xpPendingIsPerfect = false;
+  let _xpPendingGems = 0;
+
+  function closeXpOverlay(overlay, fromXp, toXp, stillCurrent) {
+    overlay.classList.remove('show');
+    overlay.style.background = '';
+    setTimeout(() => {
+      if(overlay) overlay.style.display = 'none';
+    }, 400);
+    updateXpUI(fromXp, toXp);
+    bounceXpBar();
+  }
+
+  function showGemsAnimation(overlay, stillCurrent, fromXp, toXp) {
+    const gems = _xpPendingGems;
+    // Ganti konten overlay ke gems view
+    const inner = overlay.querySelector('.xp-ov-inner');
+    if (!inner) { closeXpOverlay(overlay, fromXp, toXp, stillCurrent); return; }
+
+    inner.style.transition = 'opacity .3s';
+    inner.style.opacity = '0';
+
+    setTimeout(() => {
+      inner.innerHTML = `
+        <div id="gems-icon" style="font-size:64px;margin-bottom:8px;opacity:0;filter:drop-shadow(0 0 24px rgba(45,212,191,.8));">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#2DD4BF" stroke="#0D9488" stroke-width=".5"/>
+            <path d="M2 7L12 12V22L2 7Z" fill="#0D9488"/>
+            <path d="M22 7L12 12V22L22 7Z" fill="#14B8A6"/>
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="url(#gem-shine)" opacity=".4"/>
+            <defs>
+              <linearGradient id="gem-shine" x1="12" y1="2" x2="12" y2="12" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="white"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div id="gems-number" style="font-family:'Nunito',sans-serif;font-size:80px;font-weight:900;line-height:1;letter-spacing:-3px;background:linear-gradient(160deg,#A7F3D0,#2DD4BF,#0D9488);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0;transform:scale(.3) translateY(40px);">+0</div>
+        <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(45,212,191,.12);border:1.5px solid rgba(45,212,191,.35);border-radius:99px;padding:7px 20px;margin-top:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:#2DD4BF;opacity:0;animation:xp-fade-up .4s ease .6s both;" id="gems-pill">💎 Gems Didapat!</div>
+        <div style="margin-top:8px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,.4);opacity:0;animation:xp-fade-up .4s ease .75s both;" id="gems-sub">Perfect lesson! Kamu luar biasa! 🌟</div>
+        <div id="gems-tap-hint" style="position:absolute;bottom:60px;left:0;right:0;text-align:center;font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;color:rgba(255,255,255,.4);opacity:0;"></div>
+      `;
+
+      // Update background ke teal
+      overlay.style.background = 'rgba(11,7,24,.92)';
+      inner.style.opacity = '1';
+
+      // Launch teal particles
+      xpLaunchParticles(['#2DD4BF','#A7F3D0','#0D9488','#ffffff','#14B8A6']);
+
+      // Animasi icon gem
+      setTimeout(() => {
+        const gemIcon = document.getElementById('gems-icon');
+        if(gemIcon) gemIcon.style.animation = 'xp-icon-pop .5s cubic-bezier(.34,1.56,.64,1) both';
+
+        setTimeout(() => {
+          const gemNum = document.getElementById('gems-number');
+          if(gemNum) {
+            gemNum.style.animation = 'xp-num-slam .55s cubic-bezier(.22,1,.36,1) both';
+            animateNumberTo(0, gems, 1200, val => {
+              if(gemNum) gemNum.textContent = '+' + Math.round(val);
+            }).then(() => {
+              // Tap hint
+              const tapHint = document.getElementById('gems-tap-hint');
+              if(tapHint) {
+                tapHint.textContent = appLang==='id' ? 'Ketuk untuk melanjutkan' : 'Tap to continue';
+                tapHint.style.animation = 'xp-fade-up .5s ease both, xp-tap-pulse 1.8s ease .5s infinite';
+              }
+              const onTap2 = () => {
+                overlay.removeEventListener('click', onTap2);
+                closeXpOverlay(overlay, fromXp, toXp, stillCurrent);
+              };
+              setTimeout(() => overlay.addEventListener('click', onTap2), 100);
+            });
+          }
+        }, 300);
+      }, 100);
+    }, 300);
+  }
+
   // ── XP PARTICLE CONFETTI ──
-  function xpLaunchParticles() {
+  function xpLaunchParticles(customColors) {
     const canvas = document.getElementById('xp-particle-canvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const colors = ['#FACC15','#FDE68A','#F59E0B','#A855F7','#7C3AED','#2DD4BF','#ffffff'];
+    const colors = customColors || ['#FACC15','#FDE68A','#F59E0B','#A855F7','#7C3AED','#2DD4BF','#ffffff'];
     const particles = [];
     const count = 80;
 
@@ -4941,27 +5035,28 @@
         if (stillCurrent()) numberEl.textContent = '+' + formatXpNumber(Math.round(val));
       }).then(() => {
         if (!stillCurrent()) return;
-        // Let the final number sit for a beat so it actually reads before flying off.
-        setTimeout(() => {
+        // Count-up selesai → munculkan "Ketuk untuk melanjutkan"
+        const tapHint = document.getElementById('xp-tap-hint');
+        if (tapHint) {
+          tapHint.textContent = _xpPendingIsPerfect
+            ? (appLang==='id' ? 'Ketuk untuk klaim gems 💎' : 'Tap to claim gems 💎')
+            : (appLang==='id' ? 'Ketuk untuk melanjutkan' : 'Tap to continue');
+          tapHint.style.animation = 'none';
+          void tapHint.offsetWidth;
+          tapHint.style.animation = 'xp-fade-up .5s ease both, xp-tap-pulse 1.8s ease .5s infinite';
+        }
+        // Klik layar mana aja → lanjut ke gems atau map
+        const onTap = () => {
           if (!stillCurrent()) return;
-          // Clear the backdrop blur first so the number flies crisply, not through frosted glass.
-          overlay.classList.add('no-blur');
-          // Sembunyikan semua elemen kecuali angka XP
-          const bolt = document.getElementById('xp-ov-bolt');
-          const glow = overlay.querySelector('.xp-ov-glow');
-          const pill = overlay.querySelector('.xp-ov-pill');
-          const sub  = overlay.querySelector('.xp-ov-sub');
-          [bolt, glow, pill, sub].forEach(el => {
-            if(el) { el.style.transition='opacity .25s'; el.style.opacity='0'; }
-          });
-          // Background jadi transparan total
-          overlay.style.transition = 'background .3s';
-          overlay.style.background = 'transparent';
-          setTimeout(() => {
-            if (!stillCurrent()) return;
-            flyXpNumberToBar(numberEl, overlay, fromXp, toXp, stillCurrent);
-          }, 350);
-        }, 500);
+          overlay.removeEventListener('click', onTap);
+          if (tapHint) tapHint.style.opacity = '0';
+          if (_xpPendingIsPerfect) {
+            showGemsAnimation(overlay, stillCurrent, fromXp, toXp);
+          } else {
+            closeXpOverlay(overlay, fromXp, toXp, stillCurrent);
+          }
+        };
+        setTimeout(() => overlay.addEventListener('click', onTap), 100);
       });
     }, 250);
   }
@@ -8138,6 +8233,9 @@
       const correct  = quizScore;
       const perfect  = correct === answered;
       const noHint   = hintCount === 3;
+      // Set flag untuk gems animation di XP overlay
+      _xpPendingIsPerfect = perfect && !isReviewMode && !isPracticeMode;
+      _xpPendingGems = _xpPendingIsPerfect ? Math.max(5, answered * 2) : 0;
 
       if (isReviewMode) {
         // Review mode: clear the questions that were answered correctly
