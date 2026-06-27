@@ -10414,8 +10414,6 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
   }
 
   // ── Image Generate Detection ──
-  const FAL_API_KEY = 'd777bfd5-4594-418d-9f81-048acc981f0f:4daab38abbcab465f647fd7c48a9d4e7';
-
   function shouldGenerateImage(text) {
     const t = text.toLowerCase().trim();
     if (!t) return false;
@@ -10467,10 +10465,9 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
   }
 
   async function generateImageWithFal(prompt) {
-    const res = await fetch('https://fal.run/fal-ai/flux/schnell', {
+    const res = await fetch('https://vexlingo-image.prastyaaris6.workers.dev', {
       method: 'POST',
       headers: {
-        'Authorization': `Key ${FAL_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ prompt, num_images: 1, image_size: 'square' })
