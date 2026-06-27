@@ -10413,6 +10413,87 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
     return t('vex_quiz_shimmer', { count, lang: langSuffix });
   }
 
+  // ── Image Generate Detection ──
+  const FAL_API_KEY = 'd777bfd5-4594-418d-9f81-048acc981f0f:4daab38abbcab465f647fd7c48a9d4e7';
+
+  function shouldGenerateImage(text) {
+    const t = text.toLowerCase().trim();
+    if (!t) return false;
+
+    // Kata-kata yang menandakan TOLAK generate (cek dulu sebelum trigger)
+    const rejectPatterns = [
+      /jangan\s+(buat|bikin|generate|create|gambar|tampil)/,
+      /don'?t\s+(generate|create|make|draw|show)\s+(a\s+)?(image|picture|photo|illustration)/,
+      /no\s+(image|picture|photo)/,
+      /bukan\s+(gambar|image)/,
+      /tidak\s+(mau|perlu|usah)\s+(gambar|image)/,
+      /cara\s+(gambar|drawing|menggambar|draw)/,
+      /belajar\s+(gambar|drawing|menggambar|draw)/,
+      /tips?\s+(gambar|drawing|menggambar)/,
+      /tutorial\s+(gambar|drawing|menggambar)/,
+      /aplikasi\s+(gambar|drawing)/,
+      /software\s+(gambar|drawing)/,
+      /app\s+(gambar|drawing|paint)/,
+      /paint\b/,  // "iblis paint", "ms paint", dll
+      /photoshop/,
+      /illustrator/,
+      /procreate/,
+      /figma/,
+      /canva/,
+    ];
+    for (const pattern of rejectPatterns) {
+      if (pattern.test(t)) return false;
+    }
+
+    // Kata-kata trigger BUAT gambar (Indo + Inggris)
+    const triggerPatterns = [
+      /\b(buatkan|bikinkan|buatin|bikinin)\s+(aku|saya|gue|gw|me)?\s*(sebuah\s+)?(gambar|foto|image|ilustrasi|illustration|picture|photo)\b/,
+      /\b(buat|bikin)\s+(gambar|image|ilustrasi|illustration|picture|foto|photo)\b/,
+      /\b(generate|create|make|draw)\s+(a\s+|an\s+|me\s+a\s+|me\s+an\s+)?(image|picture|photo|illustration|drawing)\b/,
+      /\b(gambarkan|ilustrasikan)\b/,
+      /\bgenerate\s+image\b/,
+      /\bimage\s+gen(erate)?\b/,
+      /\btext.?to.?image\b/,
+      /\bdraw\s+me\b/,
+      /\bmake\s+me\s+a\s+(picture|image|photo|drawing)\b/,
+      /\bcreate\s+(an?\s+)?(image|picture|illustration)\b/,
+      /\bshow\s+me\s+(a\s+|an\s+)?(picture|image|photo)\s+of\b/,
+      /\bgenerate\s+(a\s+|an\s+)?picture\b/,
+    ];
+    for (const pattern of triggerPatterns) {
+      if (pattern.test(t)) return true;
+    }
+    return false;
+  }
+
+  async function generateImageWithFal(prompt) {
+    const res = await fetch('https://fal.run/fal-ai/flux/schnell', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Key ${FAL_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt, num_images: 1, image_size: 'square' })
+    });
+    if (!res.ok) throw new Error('Gagal generate gambar: ' + res.status);
+    const data = await res.json();
+    const url = data?.images?.[0]?.url;
+    if (!url) throw new Error('Tidak ada gambar yang dihasilkan');
+    return url;
+  }
+
+  function extractImagePrompt(text) {
+    // Hapus kata trigger dan ambil sisa teks sebagai prompt
+    return text
+      .replace(/\b(buatkan|bikinkan|buatin|bikinin|buat|bikin)\s+(aku|saya|gue|gw|me)?\s*(sebuah\s+)?(gambar|foto|image|ilustrasi|illustration|picture|photo)\s*(dari|tentang|berupa|of|about)?\s*/i, '')
+      .replace(/\b(generate|create|make|draw)\s+(a\s+|an\s+|me\s+a\s+|me\s+an\s+)?(image|picture|photo|illustration|drawing)\s*(of|about|showing)?\s*/i, '')
+      .replace(/\b(gambarkan|ilustrasikan)\s*/i, '')
+      .replace(/\bdraw\s+me\s*/i, '')
+      .replace(/\bshow\s+me\s+(a\s+|an\s+)?(picture|image|photo)\s+of\s*/i, '')
+      .replace(/\bgenerate\s+(a\s+|an\s+)?picture\s*(of|about)?\s*/i, '')
+      .trim() || text;
+  }
+
   // ── Send to Groq ──
   async function sendToVexGroq(userText, imageAttachment) {
     if (vexSending) return;
@@ -10435,6 +10516,48 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
       vexChatHistory.push({ role: 'user', content: contentParts });
     } else {
       vexChatHistory.push({ role: 'user', content: userText });
+    }
+
+    // ── Cek apakah user minta generate image ──
+    if (shouldGenerateImage(userText) && !imageAttachment) {
+      if (!isProUser()) {
+        appendVexBubble('✨ Fitur generate gambar hanya untuk pengguna Pro. Upgrade dulu ya!', 'vex');
+        vexSending = false;
+        const micBtn2 = document.getElementById('vex-mic-btn');
+        const hint2 = document.getElementById('vex-mic-hint');
+        if (micBtn2) micBtn2.disabled = false;
+        if (hint2) hint2.textContent = '';
+        if (typeof setVexExpression === 'function') setVexExpression('idle');
+        return;
+      }
+      const imgLoadingId = 'vex-loading-' + Date.now();
+      appendVexBubble('<div class="vex-typing-dots"><span></span><span></span><span></span></div>', 'loading', imgLoadingId);
+      const micBtnImg = document.getElementById('vex-mic-btn');
+      const hintImg = document.getElementById('vex-mic-hint');
+      if (micBtnImg) micBtnImg.disabled = true;
+      if (hintImg) hintImg.textContent = '🎨 Sedang generate gambar...';
+      if (typeof setVexExpression === 'function') setVexExpression('thinking');
+      try {
+        const imagePrompt = extractImagePrompt(userText);
+        const imgUrl = await generateImageWithFal(imagePrompt);
+        document.getElementById(imgLoadingId)?.remove();
+        const imgBubble = `<div style="display:flex;flex-direction:column;gap:8px;">
+          <img src="${imgUrl}" alt="Generated image" style="max-width:260px;border-radius:12px;display:block;" />
+          <a href="${imgUrl}" target="_blank" style="font-size:11px;color:var(--teal);opacity:0.8;">🔗 Buka gambar penuh</a>
+        </div>`;
+        appendVexBubble(imgBubble, 'vex');
+        vexChatHistory.push({ role: 'assistant', content: `[Generated image for prompt: "${imagePrompt}"]` });
+      } catch (err) {
+        document.getElementById(imgLoadingId)?.remove();
+        appendVexBubble('❌ Gagal generate gambar. Coba lagi ya!', 'vex');
+      }
+      vexSending = false;
+      const micBtnImg2 = document.getElementById('vex-mic-btn');
+      const hintImg2 = document.getElementById('vex-mic-hint');
+      if (micBtnImg2) micBtnImg2.disabled = false;
+      if (hintImg2) hintImg2.textContent = '';
+      if (typeof setVexExpression === 'function') setVexExpression('idle');
+      return;
     }
 
     const loadingId = 'vex-loading-' + Date.now();
