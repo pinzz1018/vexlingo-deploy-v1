@@ -10414,54 +10414,64 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
   }
 
   // ── Image Generate Detection ──
-  function shouldGenerateImage(text) {
+  async function shouldGenerateImage(text) {
     const t = text.toLowerCase().trim();
     if (!t) return false;
 
-    // Kata-kata yang menandakan TOLAK generate (cek dulu sebelum trigger)
+    // Hard reject dulu — kalau ada kata tolak, langsung false
     const rejectPatterns = [
       /jangan\s+(buat|bikin|generate|create|gambar|tampil)/,
-      /don'?t\s+(generate|create|make|draw|show)\s+(a\s+)?(image|picture|photo|illustration)/,
+      /don'?t\s+(generate|create|make|draw|show)/,
       /no\s+(image|picture|photo)/,
       /bukan\s+(gambar|image)/,
       /tidak\s+(mau|perlu|usah)\s+(gambar|image)/,
       /cara\s+(gambar|drawing|menggambar|draw)/,
       /belajar\s+(gambar|drawing|menggambar|draw)/,
-      /tips?\s+(gambar|drawing|menggambar)/,
-      /tutorial\s+(gambar|drawing|menggambar)/,
+      /tips?\s+(gambar|drawing)/,
+      /tutorial\s+(gambar|drawing)/,
+      /\b(paint|photoshop|illustrator|procreate|figma|canva|iblis)\b/,
       /aplikasi\s+(gambar|drawing)/,
-      /software\s+(gambar|drawing)/,
-      /app\s+(gambar|drawing|paint)/,
-      /paint\b/,  // "iblis paint", "ms paint", dll
-      /photoshop/,
-      /illustrator/,
-      /procreate/,
-      /figma/,
-      /canva/,
     ];
-    for (const pattern of rejectPatterns) {
-      if (pattern.test(t)) return false;
-    }
+    for (const p of rejectPatterns) { if (p.test(t)) return false; }
 
-    // Kata-kata trigger BUAT gambar (Indo + Inggris)
+    // Pakai Groq buat detect intent
+    try {
+      const groqKey = getGroqKey();
+      if (groqKey) {
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + groqKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'llama3-8b-8192',
+            max_tokens: 5,
+            messages: [{
+              role: 'system',
+              content: 'You detect if the user wants to generate/create/make an AI image or picture. Reply ONLY "yes" or "no". Say "yes" if they want to generate/draw/create/make an image or picture. Say "no" for anything else including: asking how to draw, learning to draw, mentioning drawing apps, asking about images without wanting to generate one.'
+            }, {
+              role: 'user',
+              content: text
+            }]
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const answer = data.choices?.[0]?.message?.content?.trim().toLowerCase();
+          return answer === 'yes';
+        }
+      }
+    } catch(e) { /* fallback ke keyword */ }
+
+    // Fallback keyword kalau Groq gagal
     const triggerPatterns = [
-      /\b(buatkan|bikinkan|buatin|bikinin)\s+(aku|saya|gue|gw|me)?\s*(sebuah\s+)?(gambar|foto|image|ilustrasi|illustration|picture|photo)\b/,
-      /\b(buat|bikin)\s+(gambar|image|ilustrasi|illustration|picture|foto|photo)\b/,
-      /\b(generate|create|make|draw)\s+(a\s+|an\s+|me\s+a\s+|me\s+an\s+)?(image|picture|photo|illustration|drawing)\b/,
+      /\b(buatkan|bikinkan|buatin|bikinin|buat|bikin)\s+(gambar|foto|image|ilustrasi|picture|photo)\b/,
+      /\b(generate|create|make|draw)\s+(a\s+|an\s+|me\s+a\s+)?(images?|pictures?|photos?|illustration|drawing)\b/,
+      /\bmake\s+pictures?\b/,
       /\b(gambarkan|ilustrasikan)\b/,
-      /\bgenerate\s+image\b/,
-      /\bimage\s+gen(erate)?\b/,
-      /\btext.?to.?image\b/,
+      /\bgenerate\s+images?\b/,
       /\bdraw\s+me\b/,
-      /\bmake\s+me\s+a\s+(picture|image|photo|drawing)\b/,
-      /\bcreate\s+(an?\s+)?(image|picture|illustration)\b/,
-      /\bshow\s+me\s+(a\s+|an\s+)?(picture|image|photo)\s+of\b/,
-      /\bgenerate\s+(a\s+|an\s+)?picture\b/,
+      /\bvisualize\b/,
     ];
-    for (const pattern of triggerPatterns) {
-      if (pattern.test(t)) return true;
-    }
-    return false;
+    return triggerPatterns.some(p => p.test(t));
   }
 
   async function generateImageWithFal(prompt) {
@@ -10517,7 +10527,7 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
     }
 
     // ── Cek apakah user minta generate image ──
-    if (shouldGenerateImage(userText) && !imageAttachment) {
+    if (await shouldGenerateImage(userText) && !imageAttachment) {
       if (!isProUser()) {
         appendVexBubble('✨ Fitur generate gambar hanya untuk pengguna Pro. Upgrade dulu ya!', 'vex');
         vexSending = false;
@@ -10564,7 +10574,25 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
       }
 
       try {
-        const imagePrompt = extractImagePrompt(userText);
+        let imagePrompt = extractImagePrompt(userText);
+        // Auto-translate ke Inggris biar hasil Flux lebih bagus
+        try {
+          const groqKey = getGroqKey();
+          if (groqKey) {
+            const tr = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + groqKey, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ model: 'llama3-8b-8192', max_tokens: 100,
+                messages: [{ role: 'user', content: 'Translate this image prompt to English. Reply ONLY with the translated prompt, nothing else: ' + imagePrompt }]
+              })
+            });
+            if (tr.ok) {
+              const td = await tr.json();
+              const translated = td.choices?.[0]?.message?.content?.trim();
+              if (translated) imagePrompt = translated;
+            }
+          }
+        } catch(e) { /* skip translate, pakai prompt asli */ }
         const imgUrl = await generateImageWithFal(imagePrompt);
         clearInterval(timerInterval);
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -10572,14 +10600,55 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
         // Remove loading bubble
         const loadingBubble = document.querySelector(`[data-bubble-id="${imgLoadingId}"]`);
         if (loadingBubble) loadingBubble.remove();
-        const imgBubble = `<div style="display:flex;flex-direction:column;gap:8px;">
-          <img src="${imgUrl}" alt="Generated image" style="max-width:260px;border-radius:12px;display:block;" />
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:11px;color:rgba(255,255,255,0.4);">⏱ ${elapsed}s</span>
-            <a href="${imgUrl}" target="_blank" style="font-size:11px;color:var(--teal);opacity:0.8;">🔗 Buka penuh</a>
-          </div>
-        </div>`;
-        appendVexBubble(imgBubble, 'vex');
+        // Add fullscreen viewer styles if not exists
+        // Fullscreen viewer setup
+        if (!document.getElementById('vex-img-viewer')) {
+          const st = document.createElement('style');
+          st.id = 'vex-img-viewer-style';
+          st.textContent = '#vex-img-viewer{display:none;position:fixed;inset:0;z-index:9999;background:#000;flex-direction:column;align-items:center;justify-content:center;}#vex-img-viewer.active{display:flex;}#vex-img-viewer>img{max-width:100vw;max-height:100vh;object-fit:contain;}#vex-img-vbtn{position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;}#vex-img-vdl{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;text-decoration:none;}';
+          document.head.appendChild(st);
+          const viewer = document.createElement('div');
+          viewer.id = 'vex-img-viewer';
+          const vimg = document.createElement('img');
+          vimg.id = 'vex-img-viewer-img';
+          const backBtn = document.createElement('button');
+          backBtn.id = 'vex-img-vbtn';
+          backBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+          backBtn.onclick = () => viewer.classList.remove('active');
+          const dlBtn = document.createElement('a');
+          dlBtn.id = 'vex-img-vdl';
+          dlBtn.download = 'vex-generated.png';
+          dlBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+          viewer.appendChild(backBtn);
+          viewer.appendChild(vimg);
+          viewer.appendChild(dlBtn);
+          document.body.appendChild(viewer);
+        }
+        // Build image bubble via DOM
+        const bubbleWrap = document.createElement('div');
+        const genImg = document.createElement('img');
+        genImg.src = imgUrl;
+        genImg.alt = 'Generated image';
+        genImg.style.cssText = 'max-width:260px;border-radius:12px;display:block;cursor:pointer;';
+        genImg.onclick = () => {
+          document.getElementById('vex-img-viewer-img').src = imgUrl;
+          document.getElementById('vex-img-vdl').href = imgUrl;
+          document.getElementById('vex-img-viewer').classList.add('active');
+        };
+        const timerLabel = document.createElement('span');
+        timerLabel.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.4);';
+        timerLabel.textContent = '\u23F1 ' + elapsed + 's';
+        bubbleWrap.appendChild(genImg);
+        bubbleWrap.appendChild(timerLabel);
+        // appendVexBubble expects string, use direct DOM insertion
+        const vexLog = document.getElementById('vex-chat-log');
+        if (vexLog) {
+          const bubbleDiv = document.createElement('div');
+          bubbleDiv.className = 'vex-chat-bubble vex';
+          bubbleDiv.appendChild(bubbleWrap);
+          vexLog.appendChild(bubbleDiv);
+          setTimeout(() => bubbleDiv.scrollIntoView({ behavior: 'smooth', block: 'end' }), 50);
+        }
         vexChatHistory.push({ role: 'assistant', content: `[Generated image for prompt: "${imagePrompt}" in ${elapsed}s]` });
       } catch (err) {
         clearInterval(timerInterval);
