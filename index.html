@@ -10465,30 +10465,23 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
   }
 
   async function generateImageWithFal(prompt) {
-    const HF_MODEL = 'black-forest-labs/FLUX.1-schnell';
-    const MAX_RETRIES = 4;
-    for (let i = 0; i < MAX_RETRIES; i++) {
-      const res = await fetch('https://api-inference.huggingface.co/models/' + HF_MODEL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inputs: prompt, wait_for_model: true })
+    // Puter.js - gratis, tanpa API key, tanpa kartu, support Flux.1 Schnell
+    if (typeof puter === 'undefined') {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://js.puter.com/v2/';
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
       });
-      if (res.ok) {
-        const blob = await res.blob();
-        return URL.createObjectURL(blob);
-      }
-      const errText = await res.text();
-      // 503 = model loading, retry after delay
-      if (res.status === 503 && i < MAX_RETRIES - 1) {
-        let waitSec = 10;
-        try { waitSec = JSON.parse(errText).estimated_time || 10; } catch(e) {}
-        waitSec = Math.min(waitSec, 20);
-        await new Promise(r => setTimeout(r, waitSec * 1000));
-        continue;
-      }
-      throw new Error('Gagal generate gambar: ' + res.status);
     }
-    throw new Error('Model masih loading, coba lagi dalam 1 menit ya!');
+    const result = await puter.ai.txt2img(prompt, false, 'black-forest-labs/FLUX.1-schnell');
+    if (!result) throw new Error('Tidak ada gambar yang dihasilkan');
+    // result bisa berupa img element atau url
+    if (typeof result === 'string') return result;
+    if (result.src) return result.src;
+    if (result instanceof HTMLImageElement) return result.src;
+    throw new Error('Format gambar tidak dikenali');
   }
 
   function extractImagePrompt(text) {
