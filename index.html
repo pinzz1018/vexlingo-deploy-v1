@@ -10508,22 +10508,17 @@ Examples of "no": "cara menggambar gunung", "jangan buat gambar", "apa itu gunun
   }
 
   async function generateImageWithFal(prompt) {
-    const API_KEY = 'AQ.Ab8RN6JpSNKqLMPlv7Kdo240tEacgSFA_Cg6TIf8IAfcf99NSQ';
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseModalities: ['IMAGE', 'TEXT'] }
-        })
-      }
-    );
-    const data = await response.json();
-    const imagePart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-    if (!imagePart) throw new Error('Tidak ada gambar');
-    return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+    // Pollinations flux-pro - gratis, tanpa backend, tanpa API key
+    const encoded = encodeURIComponent(prompt);
+    const seed = Math.floor(Math.random() * 999999);
+    const url = 'https://image.pollinations.ai/prompt/' + encoded + '?model=flux-pro&width=1024&height=1024&seed=' + seed + '&nologo=true&enhance=true';
+    await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = resolve;
+      img.onerror = () => reject(new Error('Gagal load gambar'));
+      img.src = url;
+    });
+    return url;
   }
 
   function extractImagePrompt(text) {
@@ -11230,7 +11225,15 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
   function setImageGenMode() {
     if (!isProUser()) {
       closeVexModeMenu();
-      openProModal();
+      // Arahkan ke halaman Pro
+      const proBtn = document.querySelector('[onclick*="showProModal"], [onclick*="pro-modal"], #upgrade-pro-btn');
+      if (proBtn) proBtn.click();
+      else {
+        // Cari tombol upgrade apapun
+        const anyPro = document.querySelector('.pro-badge, [data-action="upgrade"]');
+        if (anyPro) anyPro.click();
+        else showToast('Upgrade ke Pro untuk fitur Generate Image! ✨', { icon: '🔒', duration: 3000 });
+      }
       return;
     }
     vexImageGenMode = true;
@@ -11253,12 +11256,16 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
     if (menuVoiceBtn) menuVoiceBtn.style.background = 'transparent';
     if (menuImageBtn) menuImageBtn.style.background = 'rgba(124,58,237,.25)';
 
+    // Update placeholder
     const textarea = document.getElementById('vex-text-input');
     if (textarea) textarea.placeholder = 'Describe an image to generate...';
 
     if (s2sState !== 'idle') s2sReset();
     s2sRestoreVexFromOrb();
     closeVexModeMenu();
+
+    // Tampilkan hint di chat
+    appendVexBubble('🎨 Mode Generate Image aktif! Ketik deskripsi gambar yang kamu inginkan dan aku akan membuatnya.', 'vex');
   }
   window.setImageGenMode = setImageGenMode;
 
