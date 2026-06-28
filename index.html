@@ -10423,14 +10423,22 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
       /jangan\s+(buat|bikin|generate|create|gambar|tampil)/,
       /don'?t\s+(generate|create|make|draw|show)/,
       /no\s+(image|picture|photo)/,
-      /bukan\s+(gambar|image)/,
-      /tidak\s+(mau|perlu|usah)\s+(gambar|image)/,
+      /bukan\s+(buat|bikin|generate|gambar|image|picture)/,
+      /tidak\s+(mau|perlu|usah|ingin)\s+(buat|bikin|generate|gambar|image)/,
+      /bukan\s+buat\s+gambar/,
+      /bukan\s+generate/,
+      /not\s+(generate|create|make|draw|an?\s+image)/,
       /cara\s+(gambar|drawing|menggambar|draw)/,
-      /belajar\s+(gambar|drawing|menggambar|draw)/,
+      /belajar\s+(gambar|drawing|menggambar|draw|buat\s+gambar)/,
+      /belajar\s+.*gambar/,
+      /mau\s+belajar/,
+      /ingin\s+belajar/,
       /tips?\s+(gambar|drawing)/,
       /tutorial\s+(gambar|drawing)/,
       /\b(paint|photoshop|illustrator|procreate|figma|canva|iblis)\b/,
       /aplikasi\s+(gambar|drawing)/,
+      /bukan\s+disini/,
+      /not\s+here/,
     ];
     for (const p of rejectPatterns) { if (p.test(t)) return false; }
 
@@ -10446,7 +10454,24 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
             max_tokens: 5,
             messages: [{
               role: 'system',
-              content: 'You detect if the user wants to generate/create/make an AI image or picture. Reply ONLY "yes" or "no". Say "yes" if they want to generate/draw/create/make an image or picture. Say "no" for anything else including: asking how to draw, learning to draw, mentioning drawing apps, asking about images without wanting to generate one.'
+              content: `You are an intent detector. The user message is from a language learning app with an AI image generation feature.
+
+Reply ONLY "yes" or "no".
+
+Say "yes" if the user wants to SEE or GENERATE a visual/image/picture/illustration of something. This includes:
+- Asking to generate, create, make, draw, render, visualize, show, display, or produce an image
+- Indonesian: buatkan gambar, bikin gambar, gambarin, tampilkan gambar, perlihatkan, tunjukkan, bikin foto, buat visual, gambarkan
+- Any request where the core intent is "I want to see an image of X"
+
+Say "no" if:
+- They are asking HOW to draw (tutorial, tips, cara menggambar)
+- They mention drawing apps (Photoshop, Procreate, Iblis Paint, etc.)
+- They say NOT to generate (jangan buat gambar, don't make image)
+- They are asking about something unrelated to image generation
+- They just want a text description or explanation
+
+Examples of "yes": "tampilkan pemandangan gunung", "gambarin kucing lucu", "show me a dragon", "bikin gambar sunset", "perlihatkan foto anjing"
+Examples of "no": "cara menggambar gunung", "jangan buat gambar", "apa itu gunung", "tips gambar di procreate"`
             }, {
               role: 'user',
               content: text
