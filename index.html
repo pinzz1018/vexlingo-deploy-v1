@@ -10649,20 +10649,9 @@ Examples of "no": "cara menggambar gunung", "jangan buat gambar", "apa itu gunun
           const dlBtn = document.createElement('button');
           dlBtn.id = 'vex-img-vdl';
           dlBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
-          dlBtn.onclick = async () => {
+          dlBtn.onclick = () => {
             const imgSrc = document.getElementById('vex-img-viewer-img').src;
-            try {
-              const res = await fetch(imgSrc);
-              const blob = await res.blob();
-              const blobUrl = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = blobUrl;
-              a.download = 'vex-generated.png';
-              a.click();
-              setTimeout(() => URL.revokeObjectURL(blobUrl), 3000);
-            } catch(e) {
-              window.open(imgSrc, '_blank');
-            }
+            window.open(imgSrc, '_blank');
           };
           viewer.appendChild(backBtn);
           viewer.appendChild(vimg);
@@ -10694,7 +10683,9 @@ Examples of "no": "cara menggambar gunung", "jangan buat gambar", "apa itu gunun
           vexLog.appendChild(bubbleDiv);
           setTimeout(() => bubbleDiv.scrollIntoView({ behavior: 'smooth', block: 'end' }), 50);
         }
-        vexChatHistory.push({ role: 'assistant', content: `[Generated image for prompt: "${imagePrompt}" in ${elapsed}s]` });
+        // Inject ke history supaya Vex tau gambar apa yang udah dibuat
+        vexChatHistory.push({ role: 'user', content: `[System: User meminta generate gambar dengan prompt: "${imagePrompt}"]` });
+        vexChatHistory.push({ role: 'assistant', content: `[GAMBAR DIGENERATE: "${imagePrompt}" — berhasil dibuat dalam ${elapsed}s. Gambar sudah tampil di chat.]` });
       } catch (err) {
         clearInterval(timerInterval);
         document.getElementById(imgLoadingId)?.remove();
@@ -10808,6 +10799,8 @@ FITUR BUAT SOAL CUSTOM: PENTING — setiap kali user minta dibuatkan soal, perta
    - Tiap objek wajib ada "prompt" (kalimat/pertanyaan soal), "options" (array 3-4 string pilihan), "correct" (index 0-based jawaban benar di "options").
    - JSON harus satu baris, valid (kutip ganda, tanpa trailing comma, escape karakter kutip di dalam string dengan \\").
    - JANGAN lupa tag ini — tanpa tag ini, soal tidak akan bisa ditampilkan ke user sama sekali, jadi WAJIB selalu disertakan setiap kali user minta dibuatkan soal bahasa.
+
+KEMAMPUAN GENERATE GAMBAR — PENTING: Kamu PUNYA kemampuan membuat/generate gambar AI secara langsung di dalam chat ini, KHUSUS untuk user Pro. Caranya lewat mode Image di tombol dropdown kanan atas, atau dengan meminta generate gambar di chat biasa. Gambar dibuat oleh sistem secara otomatis menggunakan AI image generation (Pollinations Flux Pro) — cepat (2-5 detik), berkualitas tinggi, dan unlimited selama user Pro. Kalau ada [GAMBAR DIGENERATE: ...] di chat history, artinya kamu sudah berhasil membuat gambar tersebut. Kamu bisa referensikan gambar yang sudah dibuat sebelumnya kalau user tanya. JANGAN PERNAH bilang kamu tidak bisa membuat gambar — kamu BISA, dan sistem akan otomatis membuatnya.
 
 SOAL AKSES INTERNET/WEB SEARCH — PENTING: Kamu PUNYA kemampuan web search otomatis di sistem ini (tidak perlu user minta secara eksplisit, sistem akan mendeteksi sendiri kapan perlu cari). JANGAN PERNAH bilang ke user kalimat seperti "aku tidak bisa mencari di internet/web", "aku tidak punya akses internet", atau semacamnya — itu TIDAK BENAR dan akan membingungkan user.
 ANTI-HALUSINASI — WAJIB DIPATUHI: Kalau kamu ditanya soal sesuatu yang spesifik (nama game, produk, aplikasi, film, tokoh, istilah, dll) dan TIDAK ADA blok [HASIL WEB SEARCH] di bawah ini:
