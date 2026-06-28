@@ -10753,7 +10753,7 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
       } catch (err) {
         clearInterval(timerInterval);
         document.getElementById(imgLoadingId)?.remove();
-        appendVexBubble('❌ Gagal generate gambar. Coba lagi ya!', 'vex');
+        appendVexBubble('❌ Gagal generate gambar: ' + (err?.message || 'Unknown error'), 'vex');
       }
       vexSending = false;
       const micBtnImg2 = document.getElementById('vex-mic-btn');
