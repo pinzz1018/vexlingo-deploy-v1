@@ -10518,7 +10518,7 @@ Examples of "no": "cara menggambar gunung", "jangan buat gambar", "apa itu gunun
         document.head.appendChild(s);
       });
     }
-    const imgEl = await puter.ai.txt2img(prompt, { model: 'black-forest-labs/flux-dev' });
+    const imgEl = await puter.ai.txt2img(prompt, { model: 'black-forest-labs/flux-schnell' });
     if (!imgEl || !imgEl.src) throw new Error('Tidak ada gambar');
     return imgEl.src;
   }
