@@ -11227,15 +11227,7 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
   function setImageGenMode() {
     if (!isProUser()) {
       closeVexModeMenu();
-      // Arahkan ke halaman Pro
-      const proBtn = document.querySelector('[onclick*="showProModal"], [onclick*="pro-modal"], #upgrade-pro-btn');
-      if (proBtn) proBtn.click();
-      else {
-        // Cari tombol upgrade apapun
-        const anyPro = document.querySelector('.pro-badge, [data-action="upgrade"]');
-        if (anyPro) anyPro.click();
-        else showToast('Upgrade ke Pro untuk fitur Generate Image! ✨', { icon: '🔒', duration: 3000 });
-      }
+      openProModal();
       return;
     }
     vexImageGenMode = true;
@@ -11258,16 +11250,12 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
     if (menuVoiceBtn) menuVoiceBtn.style.background = 'transparent';
     if (menuImageBtn) menuImageBtn.style.background = 'rgba(124,58,237,.25)';
 
-    // Update placeholder
     const textarea = document.getElementById('vex-text-input');
     if (textarea) textarea.placeholder = 'Describe an image to generate...';
 
     if (s2sState !== 'idle') s2sReset();
     s2sRestoreVexFromOrb();
     closeVexModeMenu();
-
-    // Tampilkan hint di chat
-    appendVexBubble('🎨 Mode Generate Image aktif! Ketik deskripsi gambar yang kamu inginkan dan aku akan membuatnya.', 'vex');
   }
   window.setImageGenMode = setImageGenMode;
 
