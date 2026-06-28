@@ -10462,24 +10462,7 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
             max_tokens: 5,
             messages: [{
               role: 'system',
-              content: `You are an intent detector. The user message is from a language learning app with an AI image generation feature.
-
-Reply ONLY "yes" or "no".
-
-Say "yes" if the user wants to SEE or GENERATE a visual/image/picture/illustration of something. This includes:
-- Asking to generate, create, make, draw, render, visualize, show, display, or produce an image
-- Indonesian: buatkan gambar, bikin gambar, gambarin, tampilkan gambar, perlihatkan, tunjukkan, bikin foto, buat visual, gambarkan
-- Any request where the core intent is "I want to see an image of X"
-
-Say "no" if:
-- They are asking HOW to draw (tutorial, tips, cara menggambar)
-- They mention drawing apps (Photoshop, Procreate, Iblis Paint, etc.)
-- They say NOT to generate (jangan buat gambar, don't make image)
-- They are asking about something unrelated to image generation
-- They just want a text description or explanation
-
-Examples of "yes": "tampilkan pemandangan gunung", "gambarin kucing lucu", "show me a dragon", "bikin gambar sunset", "perlihatkan foto anjing"
-Examples of "no": "cara menggambar gunung", "jangan buat gambar", "apa itu gunung", "tips gambar di procreate"`
+              content: 'You are an AI image generation intent detector. Your ONLY job is to decide if the user wants you to generate/show/create an AI image. Reply ONLY with the single word yes or no. Nothing else. Say yes if the user wants to SEE, VIEW, MAKE, CREATE, GENERATE, DRAW, RENDER, or PRODUCE an image of something. Indonesian keywords: tampilkan, tunjukkan, perlihatkan, buatkan, bikinkan, buatin, bikinin, buat, bikin, gambarin, gambarkan, ilustrasikan, foto, gambar. English keywords: show, display, visualize, picture, photo, image, illustration, sketch, render, draw, generate, create, make. Also say yes for descriptive prompts like a cat on the beach or kucing di pantai saat sunset. Say yes for pengen liat X, show me X, bikin X dong. LEAN TOWARD YES for ambiguous cases. Say no if: asking HOW to draw (tutorial, tips, cara menggambar), mentions drawing apps (Procreate, Photoshop, Canva, Iblis Paint, Figma), says NOT to generate (jangan buat gambar), wants to LEARN drawing skills, or unrelated question. YES examples: tampilkan pemandangan gunung, pengen liat kucing lucu, gambarin naga, foto pantai dong, show me a dragon, draw me a robot, buatin gambar kuda. NO examples: cara menggambar gunung, tips di procreate, jangan buat gambar, belajar menggambar.'
             }, {
               role: 'user',
               content: text
@@ -10508,19 +10491,17 @@ Examples of "no": "cara menggambar gunung", "jangan buat gambar", "apa itu gunun
   }
 
   async function generateImageWithFal(prompt) {
-    // Puter.js - gratis, tanpa API key, tanpa kartu, pakai flux-schnell
-    if (typeof puter === 'undefined') {
-      await new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = 'https://js.puter.com/v2/';
-        s.onload = resolve;
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
-    const imgEl = await puter.ai.txt2img(prompt, { model: 'black-forest-labs/flux-schnell' });
-    if (!imgEl || !imgEl.src) throw new Error('Tidak ada gambar');
-    return imgEl.src;
+    // Pollinations flux-pro - gratis, tanpa backend, tanpa API key
+    const encoded = encodeURIComponent(prompt);
+    const seed = Math.floor(Math.random() * 999999);
+    const url = 'https://image.pollinations.ai/prompt/' + encoded + '?model=flux-pro&width=1024&height=1024&seed=' + seed + '&nologo=true&enhance=true';
+    await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = resolve;
+      img.onerror = () => reject(new Error('Gagal load gambar'));
+      img.src = url;
+    });
+    return url;
   }
 
   function extractImagePrompt(text) {
@@ -10648,10 +10629,13 @@ Examples of "no": "cara menggambar gunung", "jangan buat gambar", "apa itu gunun
           backBtn.id = 'vex-img-vbtn';
           backBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
           backBtn.onclick = () => viewer.classList.remove('active');
-          const dlBtn = document.createElement('a');
+          const dlBtn = document.createElement('button');
           dlBtn.id = 'vex-img-vdl';
-          dlBtn.download = 'vex-generated.png';
           dlBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+          dlBtn.onclick = () => {
+            const imgSrc = document.getElementById('vex-img-viewer-img').src;
+            window.open(imgSrc, '_blank');
+          };
           viewer.appendChild(backBtn);
           viewer.appendChild(vimg);
           viewer.appendChild(dlBtn);
@@ -10665,7 +10649,7 @@ Examples of "no": "cara menggambar gunung", "jangan buat gambar", "apa itu gunun
         genImg.style.cssText = 'max-width:260px;border-radius:12px;display:block;cursor:pointer;';
         genImg.onclick = () => {
           document.getElementById('vex-img-viewer-img').src = imgUrl;
-          document.getElementById('vex-img-vdl').href = imgUrl;
+          // download handled by onclick
           document.getElementById('vex-img-viewer').classList.add('active');
         };
         const timerLabel = document.createElement('span');
@@ -10682,7 +10666,9 @@ Examples of "no": "cara menggambar gunung", "jangan buat gambar", "apa itu gunun
           vexLog.appendChild(bubbleDiv);
           setTimeout(() => bubbleDiv.scrollIntoView({ behavior: 'smooth', block: 'end' }), 50);
         }
-        vexChatHistory.push({ role: 'assistant', content: `[Generated image for prompt: "${imagePrompt}" in ${elapsed}s]` });
+        // Inject ke history supaya Vex tau gambar apa yang udah dibuat
+        vexChatHistory.push({ role: 'user', content: `[System: User meminta generate gambar dengan prompt: "${imagePrompt}"]` });
+        vexChatHistory.push({ role: 'assistant', content: `[GAMBAR DIGENERATE: "${imagePrompt}" — berhasil dibuat dalam ${elapsed}s. Gambar sudah tampil di chat.]` });
       } catch (err) {
         clearInterval(timerInterval);
         document.getElementById(imgLoadingId)?.remove();
@@ -10773,11 +10759,30 @@ Ketika user menanyakan cara mengucapkan atau menerjemahkan sesuatu:
 2. Tuliskan cara bacanya dalam huruf latin yang mudah (fonetik sederhana) jika relevan
 3. Berikan contoh singkat jika membantu
 Untuk pertanyaan lain, jawab dengan ramah, ringkas, dan tepat sasaran.
-GAYA BICARA — PENTING: Ikuti gaya/nada bicara user, jangan kaku atau template seperti robot. Perhatikan cara user menulis pesannya dan sesuaikan:
-- Kalau user nulis santai/gaul (pakai kata seperti "bro", "gan", "wkwk", "anjir", singkatan, tanpa huruf kapital, dll), balas dengan nada santai dan akrab juga — boleh ikut pakai sapaan/kata yang sama secukupnya (misal user bilang "bro", kamu boleh balas pakai "bro" juga), tapi jangan dipaksa-paksa atau berlebihan sampai kerasa norak/alay.
-- Kalau user nulis sopan/formal, balas dengan sopan dan rapi, jangan tiba-tiba santai berlebihan.
-- Kalau user singkat/to the point, jangan balas kepanjangan; samakan energinya.
-- Tujuannya supaya ngobrol sama kamu kerasa seperti ngobrol sama teman manusia, bukan seperti baca jawaban template AI. Tetap jaga substansi jawaban tetap benar dan membantu, yang berubah cuma cara penyampaiannya.
+GAYA BICARA — SANGAT PENTING: Jawab seperti manusia, bukan robot. Bayangkan kamu adalah teman yang cerdas dan helpful, bukan asisten AI korporat.
+
+ATURAN WAJIB gaya bicara:
+- JANGAN pernah mulai jawaban dengan "Tentu!", "Baik!", "Tentu saja!", "Pastinya!", "Dengan senang hati!" — ini terdengar robotik dan template banget
+- JANGAN gunakan struktur yang terlalu formal kayak "Pertama... Kedua... Ketiga..." atau bullet point berlebihan untuk pertanyaan santai
+- JANGAN kepanjangan — kalau bisa dijawab 1-2 kalimat, jangan panjang-panjangin
+- JANGAN ulangi pertanyaan user di awal jawaban
+- BOLEH pakai bahasa gaul, singkatan, humor, emoji secukupnya kalau user santai
+- Kalau user singkat → kamu singkat. Kalau user panjang → baru boleh panjang
+- Jawab langsung ke inti, tanpa basa-basi panjang di awal
+- Sesekali boleh balik nanya kalau relevan, tapi jangan tiap jawaban
+- Kalau user bilang "wkwk", "anjir", "bro", dll → ikutin energinya, bukan balas formal
+
+Contoh BURUK (robotik): "Tentu! Saya akan membantu kamu. Berikut adalah penjelasan lengkap mengenai..."
+Contoh BAGUS (natural): "Oh itu gampang — [langsung jawab]"
+
+Contoh BURUK: "Baik, ada beberapa cara yang bisa kamu lakukan: 1. Pertama... 2. Kedua..."  
+Contoh BAGUS: "Bisa lewat [cara], atau kalau mau lebih simpel [cara lain]"
+
+Ikuti gaya user:
+- Santai/gaul → balas santai, boleh pakai "bro", "wkwk", dll
+- Formal → balas sopan tapi tetap ga kaku
+- Singkat → singkat
+- Teknis → teknis dan to the point
 Kamu boleh pakai format markdown ringan kalau memang membantu kejelasan jawaban (seperti AI pada umumnya): **bold** untuk istilah/poin penting, *italic* untuk penekanan, heading singkat (#) untuk jawaban panjang yang ada beberapa bagian, dan bullet/numbered list kalau menjelaskan beberapa poin. Jangan berlebihan — pakai markdown secukupnya saja, jangan setiap kalimat di-bold semua, dan untuk jawaban singkat/obrolan santai biasa cukup teks polos tanpa format apa-apa.
 BAHASA BALASAN — WAJIB: Selalu balas dalam Bahasa Indonesia, KECUALI user secara eksplisit meminta kamu menjawab dalam bahasa lain (misal "jawab dalam bahasa Inggris", "reply in English"). Fakta bahwa user sedang belajar bahasa Inggris/Mandarin/dll di VexLingo TIDAK berarti kamu harus balas dalam bahasa itu — tetap pakai Bahasa Indonesia. Jangan pernah ganti bahasa balasan hanya karena konteks pelajaran, topik, atau kata yang disebutkan user.
 MEMORY — PENTING, BACA HATI-HATI: Tag [REMEMBER: ...] HANYA untuk fakta personal yang BENAR-BENAR penting dan tahan lama (akan tetap relevan minggu/bulan depan), BUKAN untuk setiap pesan user. Defaultnya adalah TIDAK menambahkan tag ini — kamu hanya menambahkannya pada momen langka saat user secara eksplisit menyebutkan sesuatu yang personal dan durable, seperti: minta dipanggil dengan sebutan tertentu secara permanen, preferensi gaya/topik belajar yang konsisten (bukan cuma sekali nyebut), atau kebiasaan belajar yang akan mempengaruhi cara kamu berinteraksi dengannya seterusnya.
@@ -10796,6 +10801,8 @@ FITUR BUAT SOAL CUSTOM: PENTING — setiap kali user minta dibuatkan soal, perta
    - Tiap objek wajib ada "prompt" (kalimat/pertanyaan soal), "options" (array 3-4 string pilihan), "correct" (index 0-based jawaban benar di "options").
    - JSON harus satu baris, valid (kutip ganda, tanpa trailing comma, escape karakter kutip di dalam string dengan \\").
    - JANGAN lupa tag ini — tanpa tag ini, soal tidak akan bisa ditampilkan ke user sama sekali, jadi WAJIB selalu disertakan setiap kali user minta dibuatkan soal bahasa.
+
+KEMAMPUAN GENERATE GAMBAR — PENTING: Kamu PUNYA kemampuan membuat/generate gambar AI secara langsung di dalam chat ini, KHUSUS untuk user Pro. Caranya lewat mode Image di tombol dropdown kanan atas, atau dengan meminta generate gambar di chat biasa. Gambar dibuat oleh sistem secara otomatis menggunakan AI image generation (Pollinations Flux Pro) — cepat (2-5 detik), berkualitas tinggi, dan unlimited selama user Pro. Kalau ada [GAMBAR DIGENERATE: ...] di chat history, artinya kamu sudah berhasil membuat gambar tersebut. Kamu bisa referensikan gambar yang sudah dibuat sebelumnya kalau user tanya. JANGAN PERNAH bilang kamu tidak bisa membuat gambar — kamu BISA, dan sistem akan otomatis membuatnya.
 
 SOAL AKSES INTERNET/WEB SEARCH — PENTING: Kamu PUNYA kemampuan web search otomatis di sistem ini (tidak perlu user minta secara eksplisit, sistem akan mendeteksi sendiri kapan perlu cari). JANGAN PERNAH bilang ke user kalimat seperti "aku tidak bisa mencari di internet/web", "aku tidak punya akses internet", atau semacamnya — itu TIDAK BENAR dan akan membingungkan user.
 ANTI-HALUSINASI — WAJIB DIPATUHI: Kalau kamu ditanya soal sesuatu yang spesifik (nama game, produk, aplikasi, film, tokoh, istilah, dll) dan TIDAK ADA blok [HASIL WEB SEARCH] di bawah ini:
@@ -11227,7 +11234,15 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
   function setImageGenMode() {
     if (!isProUser()) {
       closeVexModeMenu();
-      openProModal();
+      // Arahkan ke halaman Pro
+      const proBtn = document.querySelector('[onclick*="showProModal"], [onclick*="pro-modal"], #upgrade-pro-btn');
+      if (proBtn) proBtn.click();
+      else {
+        // Cari tombol upgrade apapun
+        const anyPro = document.querySelector('.pro-badge, [data-action="upgrade"]');
+        if (anyPro) anyPro.click();
+        else showToast('Upgrade ke Pro untuk fitur Generate Image! ✨', { icon: '🔒', duration: 3000 });
+      }
       return;
     }
     vexImageGenMode = true;
@@ -11250,12 +11265,16 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
     if (menuVoiceBtn) menuVoiceBtn.style.background = 'transparent';
     if (menuImageBtn) menuImageBtn.style.background = 'rgba(124,58,237,.25)';
 
+    // Update placeholder
     const textarea = document.getElementById('vex-text-input');
     if (textarea) textarea.placeholder = 'Describe an image to generate...';
 
     if (s2sState !== 'idle') s2sReset();
     s2sRestoreVexFromOrb();
     closeVexModeMenu();
+
+    // Tampilkan hint di chat
+    appendVexBubble('🎨 Mode Generate Image aktif! Ketik deskripsi gambar yang kamu inginkan dan aku akan membuatnya.', 'vex');
   }
   window.setImageGenMode = setImageGenMode;
 
