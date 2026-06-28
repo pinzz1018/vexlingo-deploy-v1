@@ -10465,7 +10465,7 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
   }
 
   async function generateImageWithFal(prompt) {
-    // Puter.js - gratis, tanpa API key, tanpa kartu, support Flux.1 Schnell
+    // Puter.js - gratis, tanpa API key, tanpa kartu, pakai flux-schnell
     if (typeof puter === 'undefined') {
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
@@ -10475,13 +10475,9 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
         document.head.appendChild(s);
       });
     }
-    const result = await puter.ai.txt2img(prompt, false, 'black-forest-labs/FLUX.1-schnell');
-    if (!result) throw new Error('Tidak ada gambar yang dihasilkan');
-    // result bisa berupa img element atau url
-    if (typeof result === 'string') return result;
-    if (result.src) return result.src;
-    if (result instanceof HTMLImageElement) return result.src;
-    throw new Error('Format gambar tidak dikenali');
+    const imgEl = await puter.ai.txt2img(prompt, { model: 'black-forest-labs/flux-schnell' });
+    if (!imgEl || !imgEl.src) throw new Error('Tidak ada gambar');
+    return imgEl.src;
   }
 
   function extractImagePrompt(text) {
