@@ -10494,7 +10494,7 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
     // Pollinations flux-pro - gratis, tanpa backend, tanpa API key
     const encoded = encodeURIComponent(prompt);
     const seed = Math.floor(Math.random() * 999999);
-    const url = 'https://image.pollinations.ai/prompt/' + encoded + '?model=flux-pro&width=1024&height=1024&seed=' + seed + '&nologo=true&enhance=true';
+    const url = 'https://image.pollinations.ai/prompt/' + encoded + '?model=flux-pro&width=1024&height=1024&seed=' + seed + '&nologo=true&enhance=true&negative=watermark,text,signature,logo,chinese text,japanese text,collage,grid,multiple images,split screen';
     await new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = resolve;
@@ -10597,7 +10597,7 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
               method: 'POST',
               headers: { 'Authorization': 'Bearer ' + groqKey, 'Content-Type': 'application/json' },
               body: JSON.stringify({ model: 'llama3-8b-8192', max_tokens: 200,
-                messages: [{ role: 'user', content: `You are an expert image prompt engineer for Flux image generation model. Take the user's image request and rewrite it into a highly detailed, vivid English prompt that will produce a stunning image. Add details about: art style, lighting, mood, quality, composition. Keep it under 150 words. Reply ONLY with the enhanced prompt, nothing else. User request: ${imagePrompt}` }]
+                messages: [{ role: 'user', content: `You are an expert image prompt engineer for Flux image generation model. Take the user's image request and rewrite it into a highly detailed, vivid English prompt that will produce a stunning image. Add details about: art style, lighting, mood, quality, composition. Keep it under 150 words. IMPORTANT: always describe a SINGLE scene or subject, never a grid/collage/multiple panels. No watermarks, no text, no signatures in the scene. Reply ONLY with the enhanced prompt, nothing else. User request: ${imagePrompt}` }]
               })
             });
             if (tr.ok) {
