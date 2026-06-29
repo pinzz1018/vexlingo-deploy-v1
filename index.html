@@ -9860,7 +9860,14 @@
           }
         }
         else {
+          // Skip pesan internal system/image
+          if (m.content && (
+            m.content.startsWith('[GAMBAR DIGENERATE:') ||
+            m.content.startsWith('[System:') ||
+            m.content.startsWith('[IMAGE GENERATED:')
+          )) return;
           const cleanContent = m.content.replace(/\[REMEMBER:\s*[^\]]+\]/gi, '').trim();
+          if (!cleanContent) return;
           const escapedRaw = cleanContent.replace(/</g,'&lt;').replace(/>/g,'&gt;');
           const escaped = renderVexMarkdown(escapedRaw);
           appendVexBubble(`${escaped}<button class="vex-tts-btn" onclick="vexSayText(this,decodeURIComponent('${encodeURIComponent(cleanContent)}'))">🔊 Dengarkan</button>`,'vex');
@@ -11447,6 +11454,9 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
       if (menuImageBtn2) menuImageBtn2.style.background = 'transparent';
       const textarea2 = document.getElementById('vex-text-input');
       if (textarea2) textarea2.placeholder = '';
+      // Hapus bubble hint image mode & riwayat image
+      document.getElementById('vex-img-mode-hint')?.remove();
+      document.querySelectorAll('.vex-img-history-item').forEach(el => el.remove());
       // Sembunyikan tombol model image
       if (typeof hideImgModelBtn === 'function') hideImgModelBtn();
       // Stop any active recording
@@ -11514,8 +11524,13 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
     s2sRestoreVexFromOrb();
     closeVexModeMenu();
 
-    // Tampilkan hint di chat
-    appendVexBubble('🎨 Mode Generate Image aktif! Ketik deskripsi gambar yang kamu inginkan dan aku akan membuatnya.', 'vex');
+    // Tampilkan hint di chat (hapus yang lama dulu kalau ada)
+    document.getElementById('vex-img-mode-hint')?.remove();
+    const hintBubble = document.createElement('div');
+    hintBubble.className = 'vex-chat-bubble vex';
+    hintBubble.id = 'vex-img-mode-hint';
+    hintBubble.innerHTML = '🎨 Mode Generate Image aktif! Ketik deskripsi gambar yang kamu inginkan dan aku akan membuatnya.';
+    document.getElementById('vex-chat-log')?.appendChild(hintBubble);
 
     // Tampilkan riwayat generate image
     showImgHistory();
