@@ -10643,12 +10643,17 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
     // Fallback keyword kalau Groq gagal
     const triggerPatterns = [
       /\b(buatkan|bikinkan|buatin|bikinin|buat|bikin)\s+(gambar|foto|image|ilustrasi|picture|photo)\b/,
-      /\b(generate|create|make|draw)\s+(a\s+|an\s+|me\s+a\s+)?(images?|pictures?|photos?|illustration|drawing)\b/,
+      /\b(buatkan|bikinkan|buatin|bikinin|buat|bikin)\s+\w+(\s+\w+)?\s*(gambar|foto|image|ilustrasi|picture|photo)\b/,
+      /\b(generate|create|make|draw)\s+(a\s+|an\s+|me\s+a\s+|me\s+an\s+)?(images?|pictures?|photos?|illustration|drawing)\b/,
+      // "make a dragon image", "create a sunset picture", "draw a cat photo" — noun before image word
+      /\b(generate|create|make|draw)\s+(?:a\s+|an\s+|me\s+a\s+|me\s+an\s+)?\w+(?:\s+\w+)?\s+(images?|pictures?|photos?|illustration|drawing)\b/,
       /\bmake\s+pictures?\b/,
       /\b(gambarkan|ilustrasikan)\b/,
       /\bgenerate\s+images?\b/,
       /\bdraw\s+me\b/,
       /\bvisualize\b/,
+      // "X image", "X picture" after show/get/want
+      /\b(show|get|want|need)\s+(?:a\s+|an\s+)?\w+(?:\s+\w+)?\s+(image|picture|photo)\b/,
     ];
     return triggerPatterns.some(p => p.test(t));
   }
@@ -10913,8 +10918,15 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
       if (micBtnImg2) micBtnImg2.disabled = false;
       if (hintImg2) hintImg2.textContent = '';
       if (typeof setVexExpression === 'function') setVexExpression('idle');
-      return;
+      // Kalau image gen mode (dedicated), stop di sini
+      // Kalau text mode (hybrid), lanjut ke chat reply juga
+      if (vexImageGenMode) return;
+      // Di text mode: lanjut generate chat reply singkat tentang gambar yang baru dibuat
+      vexSending = true; // re-enable buat chat section
     }
+
+    // Flag: apakah kita lanjut setelah generate image di text mode (hybrid)?
+    const _justGeneratedImage = shouldGenImg && !vexImageGenMode;
 
     const loadingId = 'vex-loading-' + Date.now();
     appendVexBubble('<div class="vex-typing-dots"><span></span><span></span><span></span></div>', 'loading', loadingId);
@@ -10932,8 +10944,8 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
     const vexMemoryContext = buildVexMemoryContext();
     const vexProgressContext = shouldProgressContext(userText) ? buildVexProgressContext() : '';
 
-    // Cek apakah pesan ini butuh web search; kalau iya, ganti bubble loading jadi teks shimmer "bentar mau cari di web dulu"
-    const needsSearch = shouldWebSearch(userText);
+    // Kalau hybrid (baru generate gambar), skip web search dan quiz check
+    const needsSearch = _justGeneratedImage ? false : shouldWebSearch(userText);
     if (needsSearch) {
       if (hint) hint.textContent = t('vex_searching_web');
       const loadingEl = document.getElementById(loadingId);
@@ -10944,7 +10956,7 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
     }
 
     // Cek apakah pesan ini minta dibuatkan soal/quiz; kalau iya, ganti bubble loading jadi bubble shimmer "Membuat N soal..."
-    const needsQuiz = !needsSearch && shouldGenerateQuiz(userText);
+    const needsQuiz = !needsSearch && !_justGeneratedImage && shouldGenerateQuiz(userText);
     if (needsQuiz) {
       if (hint) hint.textContent = t('vex_generating_quiz');
       const loadingEl = document.getElementById(loadingId);
@@ -11043,7 +11055,7 @@ ANTI-HALUSINASI — WAJIB DIPATUHI: Kalau kamu ditanya soal sesuatu yang spesifi
 - JANGAN PERNAH mengarang detail (nama developer/studio, tanggal rilis, platform, fitur game, dll) yang kamu tidak benar-benar yakin kebenarannya. Kalau kamu tidak punya pengetahuan pasti soal sesuatu, JANGAN isi kekosongan itu dengan tebakan yang terdengar masuk akal.
 - Kalau kamu benar-benar TIDAK familiar dengan hal yang ditanyakan, jawab JUJUR dan natural, misalnya: "wah aku belum pernah dengar soal itu" atau "hmm aku kurang familiar nih, ini soal apa ya?" — boleh minta user kasih sedikit konteks. JANGAN bilang "tidak bisa akses internet", tapi juga JANGAN mengarang seolah-olah tahu.
 - Kalau ADA blok [HASIL WEB SEARCH] di bawah, itu artinya hasil pencarian sudah otomatis didapat sistem — WAJIB jawab berdasarkan hasil itu SAJA, jangan tambahkan detail/fakta lain yang tidak ada di hasil tersebut.
-${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext : ''}${vexMemoryContext ? '\n\n' + vexMemoryContext : ''}${vexProgressContext ? '\n\n' + vexProgressContext : ''}${vexSearchContext ? '\n\n' + vexSearchContext : ''}`;
+${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext : ''}${vexMemoryContext ? '\n\n' + vexMemoryContext : ''}${vexProgressContext ? '\n\n' + vexProgressContext : ''}${vexSearchContext ? '\n\n' + vexSearchContext : ''}${_justGeneratedImage ? '\n\n[SYSTEM: Kamu baru saja berhasil men-generate gambar sesuai permintaan user. Gambarnya sudah tampil di chat. Berikan komentar singkat yang relevan tentang gambar yang sudah dibuat — paling 1-2 kalimat, natural dan antusias. JANGAN bilang "oke aku buatkan" karena gambar sudah selesai dibuat. Contoh: "Nah, dragonnya udah jadi! Seram tapi keren ya 🔥" atau "Gambarnya udah siap! Gimana, sesuai ekspektasi?"]' : ''}`;
 
     // Pakai model vision kalau ada foto terlampir; kalau cuma teks, tetap pakai model biasa
     const vexModel = imageAttachment ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'llama-3.3-70b-versatile';
@@ -11068,7 +11080,7 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
         body: JSON.stringify({
           model: vexModel,
-          max_tokens: vexSearchContext ? 800 : (needsQuiz ? 1500 : 300),
+          max_tokens: _justGeneratedImage ? 80 : (vexSearchContext ? 800 : (needsQuiz ? 1500 : 300)),
           messages: [
             { role: 'system', content: systemPrompt },
             ...messagesForApi
