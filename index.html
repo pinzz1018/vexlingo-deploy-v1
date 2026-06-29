@@ -10709,6 +10709,15 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
         // Inject ke history supaya Vex tau gambar apa yang udah dibuat
         vexChatHistory.push({ role: 'user', content: `[System: User meminta generate gambar dengan prompt: "${imagePrompt}"]` });
         vexChatHistory.push({ role: 'assistant', content: `[GAMBAR DIGENERATE: "${imagePrompt}" — berhasil dibuat dalam ${elapsed}s. Gambar sudah tampil di chat.]` });
+
+        // Simpan ke riwayat generate image di localStorage
+        try {
+          const VEX_IMG_HISTORY_KEY = 'vexlingo_img_history';
+          const existing = JSON.parse(localStorage.getItem(VEX_IMG_HISTORY_KEY) || '[]');
+          existing.unshift({ url: imgUrl, prompt: imagePrompt, elapsed, ts: Date.now() });
+          if (existing.length > 50) existing.splice(50); // max 50
+          localStorage.setItem(VEX_IMG_HISTORY_KEY, JSON.stringify(existing));
+        } catch(e) {}
       } catch (err) {
         clearInterval(timerInterval);
         document.getElementById(imgLoadingId)?.remove();
@@ -11315,7 +11324,62 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
 
     // Tampilkan hint di chat
     appendVexBubble('🎨 Mode Generate Image aktif! Ketik deskripsi gambar yang kamu inginkan dan aku akan membuatnya.', 'vex');
+
+    // Tampilkan riwayat generate image
+    showImgHistory();
   }
+
+  function showImgHistory() {
+    const VEX_IMG_HISTORY_KEY = 'vexlingo_img_history';
+    let history = [];
+    try { history = JSON.parse(localStorage.getItem(VEX_IMG_HISTORY_KEY) || '[]'); } catch(e) {}
+    if (!history.length) return;
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'margin-top:4px;';
+
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;';
+    header.innerHTML = '<span style="font-size:12px;color:rgba(255,255,255,0.5);">🕐 Riwayat Generate</span><button onclick="clearImgHistory()" style="font-size:10px;color:rgba(255,255,255,0.3);background:none;border:none;cursor:pointer;">Hapus semua</button>';
+    wrap.appendChild(header);
+
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:6px;';
+
+    history.slice(0, 9).forEach(item => {
+      const cell = document.createElement('div');
+      cell.style.cssText = 'position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:pointer;';
+      const img = document.createElement('img');
+      img.src = item.url;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+      img.onclick = () => {
+        document.getElementById('vex-img-viewer-img').src = item.url;
+        document.getElementById('vex-img-vdl').href = item.url;
+        document.getElementById('vex-img-viewer').classList.add('active');
+      };
+      cell.appendChild(img);
+      grid.appendChild(cell);
+    });
+
+    wrap.appendChild(grid);
+
+    const vexLog = document.getElementById('vex-chat-log');
+    if (vexLog) {
+      const bubbleDiv = document.createElement('div');
+      bubbleDiv.className = 'vex-chat-bubble vex';
+      bubbleDiv.id = 'vex-img-history-bubble';
+      bubbleDiv.appendChild(wrap);
+      vexLog.appendChild(bubbleDiv);
+      setTimeout(() => bubbleDiv.scrollIntoView({ behavior: 'smooth', block: 'end' }), 50);
+    }
+  }
+
+  function clearImgHistory() {
+    localStorage.removeItem('vexlingo_img_history');
+    document.getElementById('vex-img-history-bubble')?.remove();
+  }
+  window.clearImgHistory = clearImgHistory;
+  window.showImgHistory = showImgHistory;
   window.setImageGenMode = setImageGenMode;
 
   // ── Move the real Vex SVG (with its working face/mouth rig) into the
