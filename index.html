@@ -11487,7 +11487,7 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
   window.setSpeechMode = setSpeechMode;
 
   let vexImageGenMode = false;
-  let vexImageModel = 'seedream5'; // default model untuk semua user
+  let vexImageModel = localStorage.getItem('vexImageModel') || 'seedream5'; // persist pilihan model
   let vexFreeGenCount = 0; // counter generate untuk free user (antrian selang-seling)
 
   function toggleImageModelSubmenu(e) {
@@ -11509,7 +11509,7 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
     }
 
     vexImageModel = selectedModel;
-    vexImageGenMode = true;
+    localStorage.setItem('vexImageModel', selectedModel);
     s2sMode = 'text';
     const chatLog = document.getElementById('vex-chat-log');
     const fullscreenVoice = document.getElementById('s2s-voice-fullscreen');
@@ -11674,7 +11674,7 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
       return;
     }
     vexImageModel = model;
-    closeImgModelPicker();
+    localStorage.setItem('vexImageModel', model);
     updateImgModelBtnLabel();
   }
   window.toggleImgModelPicker = toggleImgModelPicker;
