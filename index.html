@@ -2787,27 +2787,11 @@
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
               Speech
             </button>
-            <button onclick="toggleImageModelSubmenu(event)" id="vex-mode-menu-image"
+            <button onclick="setImageGenMode()" id="vex-mode-menu-image"
               style="width:100%;display:flex;align-items:center;gap:8px;padding:9px 10px;border:none;border-radius:9px;background:transparent;color:#F0EEFF;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left;margin-top:2px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               <span style="flex:1;">Image</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
             </button>
-            <!-- Sub-menu model image -->
-            <div id="vex-image-model-submenu" style="display:none;margin-top:2px;border-top:1px solid rgba(124,58,237,.2);padding-top:4px;">
-              <button onclick="setImageGenMode('seedream5')" id="vex-model-seedream-btn"
-                style="width:100%;display:flex;align-items:center;gap:8px;padding:8px 10px 8px 22px;border:none;border-radius:8px;background:rgba(124,58,237,.25);color:#F0EEFF;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-align:left;margin-bottom:2px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2DD4BF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg>
-                <span style="flex:1;">Seedream 5</span>
-                <span style="font-size:10px;background:rgba(45,212,191,.2);color:#2DD4BF;padding:2px 6px;border-radius:20px;font-weight:700;">FREE</span>
-              </button>
-              <button onclick="setImageGenMode('flux-pro')" id="vex-model-fluxpro-btn"
-                style="width:100%;display:flex;align-items:center;gap:8px;padding:8px 10px 8px 22px;border:none;border-radius:8px;background:transparent;color:#F0EEFF;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-align:left;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                <span style="flex:1;">Flux Pro</span>
-                <span style="font-size:10px;background:rgba(168,85,247,.25);color:#D8B4FE;padding:2px 6px;border-radius:20px;font-weight:700;">PRO</span>
-              </button>
-            </div>
           </div>
         </div>
         <button onclick="startNewChat()" title="Chat Baru" style="background:none;border:none;color:#8B7FA8;cursor:pointer;padding:4px;display:flex;align-items:center;">
@@ -9826,8 +9810,9 @@
       log.innerHTML = '';
       vexChatHistory.forEach(m => {
         if (m.role === 'user') {
+          // Skip system message generate image (tidak perlu ditampilkan)
+          if (typeof m.content === 'string' && m.content.startsWith('[System: User meminta generate')) return;
           if (Array.isArray(m.content)) {
-            // Pesan lama yang ada foto: render thumbnail + teks dari content parts
             const textPart = m.content.find(p => p.type === 'text')?.text || '';
             const imagePart = m.content.find(p => p.type === 'image_url');
             const imgHtml = imagePart
@@ -9837,6 +9822,34 @@
             appendVexBubble(imgHtml + escapedText, 'user', null, textPart);
           } else {
             appendVexBubble(m.content, 'user');
+          }
+        }
+        else if (m.role === 'image') {
+          // Render bubble gambar yang digenerate
+          const bubbleWrap = document.createElement('div');
+          const genImg = document.createElement('img');
+          genImg.src = m.url;
+          genImg.style.cssText = 'width:100%;border-radius:12px;display:block;cursor:pointer;';
+          genImg.onclick = () => {
+            const viewer = document.getElementById('vex-img-viewer');
+            const viewerImg = document.getElementById('vex-img-viewer-img');
+            const dlBtn = document.getElementById('vex-img-vdl');
+            if (viewer && viewerImg) { viewerImg.src = m.url; viewer.classList.add('active'); }
+            if (dlBtn) dlBtn.href = m.url;
+          };
+          const timerLabel = document.createElement('div');
+          timerLabel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-top:4px;';
+          timerLabel.innerHTML = '<span style="font-size:11px;color:rgba(255,255,255,0.35);">⏱ ' + (m.elapsed||'?') + 's</span>'
+            + '<span style="font-size:10px;color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.07);padding:2px 7px;border-radius:20px;">'
+            + (m.model === 'flux-pro' ? '⚡ Flux Pro' : 'Seedream 5') + '</span>';
+          bubbleWrap.appendChild(genImg);
+          bubbleWrap.appendChild(timerLabel);
+          const vexLog2 = document.getElementById('vex-chat-log');
+          if (vexLog2) {
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'vex-chat-bubble vex';
+            bubbleDiv.appendChild(bubbleWrap);
+            vexLog2.appendChild(bubbleDiv);
           }
         }
         else {
@@ -10817,16 +10830,8 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
         }
         // Inject ke history supaya Vex tau gambar apa yang udah dibuat
         vexChatHistory.push({ role: 'user', content: `[System: User meminta generate gambar dengan prompt: "${imagePrompt}"]` });
-        vexChatHistory.push({ role: 'assistant', content: `[GAMBAR DIGENERATE: "${imagePrompt}" — berhasil dibuat dalam ${elapsed}s. Gambar sudah tampil di chat.]` });
-
-        // Simpan ke riwayat generate image di localStorage
-        try {
-          const VEX_IMG_HISTORY_KEY = 'vexlingo_img_history';
-          const existing = JSON.parse(localStorage.getItem(VEX_IMG_HISTORY_KEY) || '[]');
-          existing.unshift({ url: imgUrl, prompt: imagePrompt, elapsed, ts: Date.now() });
-          if (existing.length > 50) existing.splice(50); // max 50
-          localStorage.setItem(VEX_IMG_HISTORY_KEY, JSON.stringify(existing));
-        } catch(e) {}
+        vexChatHistory.push({ role: 'image', url: imgUrl, prompt: imagePrompt, elapsed, model: vexImageModel || 'seedream5', ts: Date.now() });
+        saveCurrentSession();
       } catch (err) {
         clearInterval(timerInterval);
         document.getElementById(imgLoadingId)?.remove();
@@ -11460,48 +11465,57 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
     try { history = JSON.parse(localStorage.getItem(VEX_IMG_HISTORY_KEY) || '[]'); } catch(e) {}
     if (!history.length) return;
 
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'margin-top:4px;';
+    const vexLog = document.getElementById('vex-chat-log');
+    if (!vexLog) return;
 
-    const header = document.createElement('div');
-    header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;';
-    header.innerHTML = '<span style="font-size:12px;color:rgba(255,255,255,0.5);">🕐 Riwayat Generate</span><button onclick="clearImgHistory()" style="font-size:10px;color:rgba(255,255,255,0.3);background:none;border:none;cursor:pointer;">Hapus semua</button>';
-    wrap.appendChild(header);
+    // Hapus bubble history lama kalau ada
+    document.querySelectorAll('.vex-img-history-item').forEach(el => el.remove());
 
-    const grid = document.createElement('div');
-    grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:6px;';
+    // Header bubble (label + tombol hapus semua)
+    const headerBubble = document.createElement('div');
+    headerBubble.className = 'vex-chat-bubble vex vex-img-history-item';
+    headerBubble.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:8px 12px;';
+    headerBubble.innerHTML = '<span style="font-size:12px;color:rgba(255,255,255,0.45);">🕐 Riwayat gambar</span>'
+      + '<button onclick="clearImgHistory()" style="font-size:11px;color:rgba(255,255,255,0.3);background:none;border:none;cursor:pointer;padding:0;">Hapus semua</button>';
+    vexLog.appendChild(headerBubble);
 
-    history.slice(0, 9).forEach(item => {
-      const cell = document.createElement('div');
-      cell.style.cssText = 'position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:pointer;';
+    // Setiap gambar jadi bubble sendiri
+    history.slice(0, 12).forEach(item => {
+      const bubbleDiv = document.createElement('div');
+      bubbleDiv.className = 'vex-chat-bubble vex vex-img-history-item';
+      bubbleDiv.style.cssText = 'padding:6px;';
+
+      const timeStr = item.ts ? new Date(item.ts).toLocaleDateString('id-ID', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+
       const img = document.createElement('img');
       img.src = item.url;
-      img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+      img.style.cssText = 'width:100%;border-radius:10px;display:block;cursor:pointer;';
       img.onclick = () => {
-        document.getElementById('vex-img-viewer-img').src = item.url;
-        document.getElementById('vex-img-vdl').href = item.url;
-        document.getElementById('vex-img-viewer').classList.add('active');
+        const viewer = document.getElementById('vex-img-viewer');
+        const viewerImg = document.getElementById('vex-img-viewer-img');
+        const dlBtn = document.getElementById('vex-img-vdl');
+        if (viewer && viewerImg) { viewerImg.src = item.url; viewer.classList.add('active'); }
+        if (dlBtn) dlBtn.href = item.url;
       };
-      cell.appendChild(img);
-      grid.appendChild(cell);
+
+      const meta = document.createElement('div');
+      meta.style.cssText = 'margin-top:6px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;';
+      meta.innerHTML = '<span style="font-size:11px;color:rgba(255,255,255,0.4);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
+        + (item.prompt || '') + '</span>'
+        + '<span style="font-size:10px;color:rgba(255,255,255,0.25);flex-shrink:0;">' + timeStr + '</span>';
+
+      bubbleDiv.appendChild(img);
+      bubbleDiv.appendChild(meta);
+      vexLog.appendChild(bubbleDiv);
     });
 
-    wrap.appendChild(grid);
-
-    const vexLog = document.getElementById('vex-chat-log');
-    if (vexLog) {
-      const bubbleDiv = document.createElement('div');
-      bubbleDiv.className = 'vex-chat-bubble vex';
-      bubbleDiv.id = 'vex-img-history-bubble';
-      bubbleDiv.appendChild(wrap);
-      vexLog.appendChild(bubbleDiv);
-      setTimeout(() => bubbleDiv.scrollIntoView({ behavior: 'smooth', block: 'end' }), 50);
-    }
+    const last = vexLog.lastElementChild;
+    if (last) setTimeout(() => last.scrollIntoView({ behavior: 'smooth', block: 'end' }), 50);
   }
 
   function clearImgHistory() {
     localStorage.removeItem('vexlingo_img_history');
-    document.getElementById('vex-img-history-bubble')?.remove();
+    document.querySelectorAll('.vex-img-history-item').forEach(el => el.remove());
   }
   window.clearImgHistory = clearImgHistory;
   window.showImgHistory = showImgHistory;
