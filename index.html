@@ -10614,12 +10614,12 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + groqKey, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'llama3-groq-70b-8192-tool-use-preview',
+            model: 'llama3-groq-8b-8192-tool-use-preview',
             max_tokens: 100,
             tools: [VEX_IMAGE_TOOL],
             tool_choice: 'auto',
             messages: [
-              { role: 'system', content: 'You are an intent detector. If the user wants to generate/see/create an image, call the generate_image tool with a clean English prompt. Otherwise do nothing.' },
+              { role: 'system', content: 'You are an intent detector. If the user wants to generate/see/create an image, call the generate_image tool with a clean English prompt. Otherwise do nothing and return no tool call.' },
               { role: 'user', content: text }
             ]
           })
@@ -11035,7 +11035,7 @@ FITUR BUAT SOAL CUSTOM: PENTING — setiap kali user minta dibuatkan soal, perta
    - JSON harus satu baris, valid (kutip ganda, tanpa trailing comma, escape karakter kutip di dalam string dengan \\").
    - JANGAN lupa tag ini — tanpa tag ini, soal tidak akan bisa ditampilkan ke user sama sekali, jadi WAJIB selalu disertakan setiap kali user minta dibuatkan soal bahasa.
 
-KEMAMPUAN GENERATE GAMBAR — PENTING: Kamu PUNYA kemampuan membuat/generate gambar AI secara langsung di dalam chat ini, KHUSUS untuk user Pro. Caranya lewat mode Image di tombol dropdown kanan atas, atau dengan meminta generate gambar di chat biasa. Gambar dibuat oleh sistem secara otomatis menggunakan AI image generation (Pollinations Flux Pro) — cepat (2-5 detik), berkualitas tinggi, dan unlimited selama user Pro. Kalau ada [GAMBAR DIGENERATE: ...] di chat history, artinya kamu sudah berhasil membuat gambar tersebut. Kamu bisa referensikan gambar yang sudah dibuat sebelumnya kalau user tanya. JANGAN PERNAH bilang kamu tidak bisa membuat gambar — kamu BISA, dan sistem akan otomatis membuatnya.
+KEMAMPUAN GENERATE GAMBAR — PENTING: Sistem ini PUNYA kemampuan generate gambar AI secara otomatis. Kalau user minta gambar, sistem yang handle sendiri — kamu TIDAK perlu menulis [GAMBAR DIGENERATE: ...] atau apapun. Cukup respons natural seperti "Oke, aku buatkan!" atau "Siap, gambarnya sedang dibuat!" tanpa format apapun. JANGAN PERNAH tulis tag atau format dalam kurung kotak terkait gambar.
 
 SOAL AKSES INTERNET/WEB SEARCH — PENTING: Kamu PUNYA kemampuan web search otomatis di sistem ini (tidak perlu user minta secara eksplisit, sistem akan mendeteksi sendiri kapan perlu cari). JANGAN PERNAH bilang ke user kalimat seperti "aku tidak bisa mencari di internet/web", "aku tidak punya akses internet", atau semacamnya — itu TIDAK BENAR dan akan membingungkan user.
 ANTI-HALUSINASI — WAJIB DIPATUHI: Kalau kamu ditanya soal sesuatu yang spesifik (nama game, produk, aplikasi, film, tokoh, istilah, dll) dan TIDAK ADA blok [HASIL WEB SEARCH] di bawah ini:
