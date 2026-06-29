@@ -4370,6 +4370,8 @@
       vex_searching_web: 'Vex is searching the web...',
       vex_searching_web_shimmer: 'Searching the web',
       vex_generating_quiz: 'Vex is creating questions...',
+      img_in_queue: 'In queue...',
+      img_generating: 'Generating image...',
       vex_search_found: 'Okay, found it...',
       vex_search_not_found: 'Hmm, couldn\'t find anything, answering anyway...',
       vex_quiz_shimmer: 'Creating {count} question(s){lang}',
@@ -4589,6 +4591,8 @@
       vex_searching_web: 'Vex sedang mencari di web...',
       vex_searching_web_shimmer: 'Mencari di web',
       vex_generating_quiz: 'Vex sedang membuat soal...',
+      img_in_queue: 'Sedang dalam antrian...',
+      img_generating: 'Membuat gambar...',
       vex_search_found: 'Oke, udah ketemu nih...',
       vex_search_not_found: 'Hmm gak nemu apa-apa, lanjut jawab ya...',
       vex_quiz_shimmer: 'Membuat {count} soal{lang}',
@@ -6772,8 +6776,11 @@
       practiceBtns.forEach(id => document.getElementById(id)?.classList.add('active'));
       if (typeof renderPracticeScreen === 'function') renderPracticeScreen();
     } else {
-      mapCard.style.display = '';
+      mapCard.style.display = 'flex';
       homeBtns.forEach(id => document.getElementById(id)?.classList.add('active'));
+      // Reset scroll ke atas supaya konten tidak hilang
+      const mapScroll = document.getElementById('map-scroll');
+      if (mapScroll) mapScroll.scrollTop = 0;
     }
   }
   window.switchHomeTab = switchHomeTab;
@@ -10545,6 +10552,25 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
   }
 
   // ── Image Generate Detection ──
+  // ── Groq Tool Calling: deteksi intent generate image ──
+  const VEX_IMAGE_TOOL = {
+    type: 'function',
+    function: {
+      name: 'generate_image',
+      description: 'Generate an AI image based on user request. Call this whenever the user wants to SEE, VIEW, CREATE, GENERATE, DRAW, or PRODUCE an image of something. Indonesian: buatkan gambar, gambarin, tampilkan, bikin foto, dll. English: generate image, draw me, show me a picture, create an image, etc.',
+      parameters: {
+        type: 'object',
+        properties: {
+          prompt: {
+            type: 'string',
+            description: 'Clean English image description prompt, stripped of trigger words. Example: user says "buatkan gambar naga api" → prompt: "a fire-breathing dragon"'
+          }
+        },
+        required: ['prompt']
+      }
+    }
+  };
+
   async function shouldGenerateImage(text) {
     const t = text.toLowerCase().trim();
     if (!t) return false;
@@ -10573,7 +10599,7 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
     ];
     for (const p of rejectPatterns) { if (p.test(t)) return false; }
 
-    // Pakai Groq buat detect intent
+    // Pakai Groq tool calling buat detect intent
     try {
       const groqKey = getGroqKey();
       if (groqKey) {
@@ -10581,21 +10607,28 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
           method: 'POST',
           headers: { 'Authorization': 'Bearer ' + groqKey, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'llama3-8b-8192',
-            max_tokens: 5,
-            messages: [{
-              role: 'system',
-              content: 'You are an AI image generation intent detector. Your ONLY job is to decide if the user wants you to generate/show/create an AI image. Reply ONLY with the single word yes or no. Nothing else. Say yes if the user wants to SEE, VIEW, MAKE, CREATE, GENERATE, DRAW, RENDER, or PRODUCE an image of something. Indonesian keywords: tampilkan, tunjukkan, perlihatkan, buatkan, bikinkan, buatin, bikinin, buat, bikin, gambarin, gambarkan, ilustrasikan, foto, gambar. English keywords: show, display, visualize, picture, photo, image, illustration, sketch, render, draw, generate, create, make. Also say yes for descriptive prompts like a cat on the beach or kucing di pantai saat sunset. Say yes for pengen liat X, show me X, bikin X dong. LEAN TOWARD YES for ambiguous cases. Say no if: asking HOW to draw (tutorial, tips, cara menggambar), mentions drawing apps (Procreate, Photoshop, Canva, Iblis Paint, Figma), says NOT to generate (jangan buat gambar), wants to LEARN drawing skills, or unrelated question. YES examples: tampilkan pemandangan gunung, pengen liat kucing lucu, gambarin naga, foto pantai dong, show me a dragon, draw me a robot, buatin gambar kuda. NO examples: cara menggambar gunung, tips di procreate, jangan buat gambar, belajar menggambar.'
-            }, {
-              role: 'user',
-              content: text
-            }]
+            model: 'llama3-groq-70b-8192-tool-use-preview',
+            max_tokens: 100,
+            tools: [VEX_IMAGE_TOOL],
+            tool_choice: 'auto',
+            messages: [
+              { role: 'system', content: 'You are an intent detector. If the user wants to generate/see/create an image, call the generate_image tool with a clean English prompt. Otherwise do nothing.' },
+              { role: 'user', content: text }
+            ]
           })
         });
         if (res.ok) {
           const data = await res.json();
-          const answer = data.choices?.[0]?.message?.content?.trim().toLowerCase();
-          return answer === 'yes';
+          const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+          if (toolCall?.function?.name === 'generate_image') {
+            // Ambil prompt dari tool call
+            try {
+              const args = JSON.parse(toolCall.function.arguments);
+              if (args.prompt) return { yes: true, prompt: args.prompt };
+            } catch(e) {}
+            return { yes: true, prompt: null };
+          }
+          return false;
         }
       }
     } catch(e) { /* fallback ke keyword */ }
@@ -10678,8 +10711,19 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
       vexChatHistory.push({ role: 'user', content: userText });
     }
 
-    // ── Cek apakah user minta generate image ──
-    if ((vexImageGenMode || await shouldGenerateImage(userText)) && !imageAttachment) {
+    // ── Cek apakah user minta generate image (via tool calling atau image mode) ──
+    let toolPrompt = null; // prompt hasil tool calling
+    let shouldGenImg = vexImageGenMode;
+    if (!shouldGenImg && !imageAttachment) {
+      const imgDetect = await shouldGenerateImage(userText);
+      if (imgDetect === true || imgDetect === false) {
+        shouldGenImg = imgDetect;
+      } else if (imgDetect && imgDetect.yes) {
+        shouldGenImg = true;
+        toolPrompt = imgDetect.prompt; // prompt bersih dari tool calling
+      }
+    }
+    if (shouldGenImg && !imageAttachment) {
       if (!isProUser()) {
         // Cek daily limit untuk free user
         const limitResult = await checkAndIncrementImgLimit();
@@ -10710,11 +10754,13 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
       }
       const imgLoadingId = 'vex-img-loading-' + Date.now();
       const imgTimerId = 'vex-img-timer-' + Date.now();
+      const modelLabelStr = vexImageModel === 'flux-pro' ? '⚡ Flux Pro' : 'Seedream 5';
       const loadingHtml = `<div id="${imgLoadingId}" style="display:flex;flex-direction:column;gap:10px;width:260px;">
         <div style="width:260px;height:260px;border-radius:12px;background:linear-gradient(135deg,#2d1b69,#1a0a3c);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;position:relative;overflow:hidden;">
           <div style="position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent);animation:imgShimmer 1.5s infinite;"></div>
           <div style="font-size:36px;animation:imgPulse 1.5s infinite;">🎨</div>
-          <div style="color:rgba(255,255,255,0.7);font-size:13px;text-align:center;">Generating image...</div>
+          <div style="font-size:10px;background:rgba(124,58,237,.3);color:#D8B4FE;padding:3px 10px;border-radius:20px;font-weight:700;">${modelLabelStr}</div>
+          <div style="color:rgba(255,255,255,0.7);font-size:13px;text-align:center;">${typeof t === 'function' ? t('img_generating') : 'Generating image...'}</div>
           <div id="${imgTimerId}" style="color:rgba(255,255,255,0.5);font-size:12px;font-family:monospace;">0.0s</div>
         </div>
       </div>`;
@@ -10744,9 +10790,26 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
       }
 
       try {
+        // ── Antrian untuk free user (selang-seling, genap = kena antrian) ──
+        if (!isProUser()) {
+          vexFreeGenCount++;
+          if (vexFreeGenCount % 2 === 0) {
+            // Kena antrian — tampilkan teks antrian di loading bubble
+            const statusEl = document.getElementById(imgLoadingId)?.querySelector('div[style*="font-size:13px"]');
+            if (statusEl) statusEl.textContent = typeof t === 'function' ? t('img_in_queue') : 'In queue...';
+            // Delay random 1-20 detik
+            const queueDelay = (Math.floor(Math.random() * 20) + 1) * 1000;
+            await new Promise(resolve => setTimeout(resolve, queueDelay));
+            // Ganti balik ke teks generating
+            const statusEl2 = document.getElementById(imgLoadingId)?.querySelector('div[style*="font-size:13px"]');
+            if (statusEl2) statusEl2.textContent = typeof t === 'function' ? t('img_generating') : 'Generating image...';
+          }
+        }
+
         // Translate full teks user ke Inggris dulu (tanpa dipotong), lalu strip trigger kata dari hasil translate
-        let imagePrompt = userText.trim();
-        try {
+        // Kalau sudah ada toolPrompt dari tool calling, skip translate
+        let imagePrompt = toolPrompt || userText.trim();
+        if (!toolPrompt) try {
           const groqKey = getGroqKey();
           if (groqKey) {
             const tr = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -11396,6 +11459,7 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
 
   let vexImageGenMode = false;
   let vexImageModel = 'seedream5'; // default model untuk semua user
+  let vexFreeGenCount = 0; // counter generate untuk free user (antrian selang-seling)
 
   function toggleImageModelSubmenu(e) {
     e.stopPropagation();
