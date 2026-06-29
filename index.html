@@ -10461,6 +10461,43 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
     return t('vex_quiz_shimmer', { count, lang: langSuffix });
   }
 
+  // ── Image Daily Limit (Firestore) ──
+  const IMG_DAILY_LIMIT = 7;
+
+  async function checkAndIncrementImgLimit() {
+    try {
+      const user = window._auth?.currentUser;
+      if (!user) return { allowed: false, resetTime: '00.00' };
+      const { doc, getDoc, setDoc } = window._dbFns;
+      const now = new Date();
+      const todayKey = now.toISOString().split('T')[0]; // YYYY-MM-DD
+      const ref = doc(db, 'imgLimits', user.uid);
+      const snap = await getDoc(ref);
+      let data = snap.exists() ? snap.data() : {};
+
+      // Reset kalau beda hari
+      if (data.date !== todayKey) {
+        data = { date: todayKey, count: 0, firstGenTime: null };
+      }
+
+      if (data.count >= IMG_DAILY_LIMIT) {
+        // Hitung reset time — sama persis jam pertama kali generate
+        const resetTime = data.firstGenTime
+          ? new Date(data.firstGenTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+          : '00.00';
+        return { allowed: false, resetTime };
+      }
+
+      // Increment count
+      const firstGenTime = data.firstGenTime || now.toISOString();
+      await setDoc(ref, { date: todayKey, count: (data.count || 0) + 1, firstGenTime }, { merge: true });
+      return { allowed: true };
+    } catch(e) {
+      // Kalau error Firestore, allow aja biar ga block user
+      return { allowed: true };
+    }
+  }
+
   // ── Image Generate Detection ──
   async function shouldGenerateImage(text) {
     const t = text.toLowerCase().trim();
@@ -10597,14 +10634,31 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
     // ── Cek apakah user minta generate image ──
     if ((vexImageGenMode || await shouldGenerateImage(userText)) && !imageAttachment) {
       if (!isProUser()) {
-        appendVexBubble('✨ Fitur generate gambar hanya untuk pengguna Pro. Upgrade dulu ya!', 'vex');
-        vexSending = false;
-        const micBtn2 = document.getElementById('vex-mic-btn');
-        const hint2 = document.getElementById('vex-mic-hint');
-        if (micBtn2) micBtn2.disabled = false;
-        if (hint2) hint2.textContent = '';
-        if (typeof setVexExpression === 'function') setVexExpression('idle');
-        return;
+        // Cek daily limit untuk free user
+        const limitResult = await checkAndIncrementImgLimit();
+        if (!limitResult.allowed) {
+          // Tampilkan loading sebentar lalu hilang
+          const blockedId = 'vex-img-blocked-' + Date.now();
+          const loadingHtmlBlocked = '<div id="' + blockedId + '" style="width:260px;height:260px;border-radius:12px;background:linear-gradient(135deg,#2d1b69,#1a0a3c);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;position:relative;overflow:hidden;"><div style="position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent);animation:imgShimmer 1.5s infinite;"></div><div style="font-size:36px;animation:imgPulse 1.5s infinite;">🎨</div><div style="color:rgba(255,255,255,0.7);font-size:13px;text-align:center;">Generating image...</div></div>';
+          appendVexBubble(loadingHtmlBlocked, 'vex');
+          await new Promise(r => setTimeout(r, 1200));
+          document.getElementById(blockedId)?.closest('.vex-chat-bubble')?.remove();
+          // Tampilkan pesan limit
+          const resetHour = limitResult.resetTime;
+          const limitMsg = '<div style="display:flex;flex-direction:column;gap:8px;">' +
+            '<div style="font-size:14px;font-weight:600;color:var(--white);">Kamu sudah mencapai batas generate gambar hari ini.</div>' +
+            '<div style="font-size:13px;color:rgba(255,255,255,0.6);">Reset otomatis besok jam ' + resetHour + '.</div>' +
+            '<div style="font-size:13px;color:rgba(255,255,255,0.6);">Atau upgrade ke <span onclick="openProModal()" style="color:#FFD23F;text-decoration:underline;cursor:pointer;font-weight:600;">VexLingo Pro</span>.</div>' +
+            '</div>';
+          appendVexBubble(limitMsg, 'vex');
+          vexSending = false;
+          const micBtnLmt = document.getElementById('vex-mic-btn');
+          const hintLmt = document.getElementById('vex-mic-hint');
+          if (micBtnLmt) micBtnLmt.disabled = false;
+          if (hintLmt) hintLmt.textContent = '';
+          if (typeof setVexExpression === 'function') setVexExpression('idle');
+          return;
+        }
       }
       const imgLoadingId = 'vex-img-loading-' + Date.now();
       const imgTimerId = 'vex-img-timer-' + Date.now();
