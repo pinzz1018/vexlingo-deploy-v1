@@ -10603,6 +10603,11 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
       /aplikasi\s+(gambar|drawing)/,
       /bukan\s+disini/,
       /not\s+here/,
+      // Pertanyaan tentang kemampuan, bukan request generate
+      /\b(bisa|bisa\s+ga|bisa\s+gak|bisa\s+tidak|apakah|apa\s+kamu|kamu\s+bisa|can\s+you|are\s+you\s+able|do\s+you)\b.*\b(generate|buat|bikin|gambar|image)\b/,
+      /\b(generate|buat|bikin|gambar|image)\b.*\b(ya\??|dong\??|kan\??|right\??|huh\??)\s*$/,
+      /sekarang\s+bisa\s+(generate|buat|bikin)\s+(image|gambar)/,
+      /kamu\s+sekarang\s+bisa/,
     ];
     for (const p of rejectPatterns) { if (p.test(t)) return false; }
 
@@ -11065,14 +11070,16 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
     // diubah jadi representasi teks aja ("[User mengirim sebuah foto] ...teks...") supaya konteks obrolan
     // tetap nyambung tanpa bikin request gagal.
     const messagesForApi = imageAttachment
-      ? vexChatHistory
-      : vexChatHistory.map(m => {
-          if (Array.isArray(m.content)) {
-            const textPart = m.content.find(p => p.type === 'text')?.text || '';
-            return { role: m.role, content: `[User mengirim sebuah foto sebelumnya]${textPart ? ' ' + textPart : ''}` };
-          }
-          return m;
-        });
+      ? vexChatHistory.filter(m => m.role !== 'image')
+      : vexChatHistory
+          .filter(m => m.role !== 'image')
+          .map(m => {
+            if (Array.isArray(m.content)) {
+              const textPart = m.content.find(p => p.type === 'text')?.text || '';
+              return { role: m.role, content: `[User mengirim sebuah foto sebelumnya]${textPart ? ' ' + textPart : ''}` };
+            }
+            return m;
+          });
 
     try {
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
