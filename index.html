@@ -10629,24 +10629,24 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
 
       try {
         let imagePrompt = extractImagePrompt(userText);
-        // Auto-translate + enhance prompt biar hasil Flux lebih bagus
+        // Auto-translate ke Inggris aja (tanpa enhance art style)
         try {
           const groqKey = getGroqKey();
           if (groqKey) {
             const tr = await fetch('https://api.groq.com/openai/v1/chat/completions', {
               method: 'POST',
               headers: { 'Authorization': 'Bearer ' + groqKey, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ model: 'llama3-8b-8192', max_tokens: 200,
-                messages: [{ role: 'user', content: `You are an expert image prompt engineer for Flux image generation model. Take the user's image request and rewrite it into a highly detailed, vivid English prompt that will produce a stunning image. Add details about: art style, lighting, mood, quality, composition. Keep it under 150 words. IMPORTANT: always describe a SINGLE scene or subject, never a grid/collage/multiple panels. No watermarks, no text, no signatures in the scene. Reply ONLY with the enhanced prompt, nothing else. User request: ${imagePrompt}` }]
+              body: JSON.stringify({ model: 'llama3-8b-8192', max_tokens: 150,
+                messages: [{ role: 'user', content: 'Translate this image prompt to English accurately. Keep the original intent and description exactly as-is, just translate. Do NOT add extra details, art styles, or descriptions. Reply ONLY with the translated prompt. If already English, return as-is. Prompt: ' + imagePrompt }]
               })
             });
             if (tr.ok) {
               const td = await tr.json();
-              const enhanced = td.choices?.[0]?.message?.content?.trim();
-              if (enhanced) imagePrompt = enhanced;
+              const translated = td.choices?.[0]?.message?.content?.trim();
+              if (translated) imagePrompt = translated;
             }
           }
-        } catch(e) { /* skip enhance, pakai prompt asli */ }
+        } catch(e) { /* skip translate, pakai prompt asli */ }
         const imgUrl = await generateImageWithFal(imagePrompt);
         clearInterval(timerInterval);
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
