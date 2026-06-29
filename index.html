@@ -10645,10 +10645,11 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
           document.getElementById(blockedId)?.closest('.vex-chat-bubble')?.remove();
           // Tampilkan pesan limit
           const resetHour = limitResult.resetTime;
+          const isId = appLang === 'id';
           const limitMsg = '<div style="display:flex;flex-direction:column;gap:8px;">' +
-            '<div style="font-size:14px;font-weight:600;color:var(--white);">Kamu sudah mencapai batas generate gambar hari ini.</div>' +
-            '<div style="font-size:13px;color:rgba(255,255,255,0.6);">Reset otomatis besok jam ' + resetHour + '.</div>' +
-            '<div style="font-size:13px;color:rgba(255,255,255,0.6);">Atau upgrade ke <span onclick="openProModal()" style="color:#FFD23F;text-decoration:underline;cursor:pointer;font-weight:600;">VexLingo Pro</span>.</div>' +
+            '<div style="font-size:14px;font-weight:600;color:var(--white);">' + (isId ? 'Kamu sudah mencapai batas generate gambar hari ini.' : "You've reached today's image generation limit.") + '</div>' +
+            '<div style="font-size:13px;color:rgba(255,255,255,0.6);">' + (isId ? 'Reset otomatis besok jam ' + resetHour + '.' : 'Resets tomorrow at ' + resetHour + '.') + '</div>' +
+            '<div style="font-size:13px;color:rgba(255,255,255,0.6);">' + (isId ? 'Atau upgrade ke' : 'Or upgrade to') + ' <span onclick="openProModal()" style="color:#FFD23F;text-decoration:underline;cursor:pointer;font-weight:600;">VexLingo Pro</span>.</div>' +
             '</div>';
           appendVexBubble(limitMsg, 'vex');
           vexSending = false;
@@ -10901,7 +10902,7 @@ Ikuti gaya user:
 - Singkat → singkat
 - Teknis → teknis dan to the point
 Kamu boleh pakai format markdown ringan kalau memang membantu kejelasan jawaban (seperti AI pada umumnya): **bold** untuk istilah/poin penting, *italic* untuk penekanan, heading singkat (#) untuk jawaban panjang yang ada beberapa bagian, dan bullet/numbered list kalau menjelaskan beberapa poin. Jangan berlebihan — pakai markdown secukupnya saja, jangan setiap kalimat di-bold semua, dan untuk jawaban singkat/obrolan santai biasa cukup teks polos tanpa format apa-apa.
-BAHASA BALASAN — WAJIB: Selalu balas dalam Bahasa Indonesia, KECUALI user secara eksplisit meminta kamu menjawab dalam bahasa lain (misal "jawab dalam bahasa Inggris", "reply in English"). Fakta bahwa user sedang belajar bahasa Inggris/Mandarin/dll di VexLingo TIDAK berarti kamu harus balas dalam bahasa itu — tetap pakai Bahasa Indonesia. Jangan pernah ganti bahasa balasan hanya karena konteks pelajaran, topik, atau kata yang disebutkan user.
+BAHASA BALASAN — WAJIB: Deteksi bahasa dari pesan user dan balas dalam bahasa yang SAMA dengan yang dipakai user. Kalau user pakai Bahasa Indonesia → balas Bahasa Indonesia. Kalau user pakai Bahasa Inggris → balas Bahasa Inggris. Kalau user pakai bahasa lain → usahakan balas dalam bahasa yang sama. JANGAN pernah ganti bahasa balasan hanya karena konteks pelajaran, topik, atau kata yang disebutkan user — yang menentukan bahasa balasan adalah bahasa yang dipakai user di pesannya, bukan bahasa yang sedang dipelajari. Kalau user minta secara eksplisit untuk ganti bahasa (misal "jawab dalam bahasa Inggris", "reply in Indonesian"), ikuti permintaan itu dan pertahankan sampai ada instruksi berbeda.
 MEMORY — PENTING, BACA HATI-HATI: Tag [REMEMBER: ...] HANYA untuk fakta personal yang BENAR-BENAR penting dan tahan lama (akan tetap relevan minggu/bulan depan), BUKAN untuk setiap pesan user. Defaultnya adalah TIDAK menambahkan tag ini — kamu hanya menambahkannya pada momen langka saat user secara eksplisit menyebutkan sesuatu yang personal dan durable, seperti: minta dipanggil dengan sebutan tertentu secara permanen, preferensi gaya/topik belajar yang konsisten (bukan cuma sekali nyebut), atau kebiasaan belajar yang akan mempengaruhi cara kamu berinteraksi dengannya seterusnya.
 ATURAN WAJIB (tidak ada pengecualian): Setiap kali user minta dipanggil dengan sebutan/panggilan tertentu (misal "panggil saya Bos", "sebut aku Kak", "mulai sekarang panggil aku Cap"), kamu WAJIB menambahkan tag [REMEMBER: User minta dipanggil "<sebutan>"] di akhir balasanmu — ini bukan opsional, jangan anggap sudah cukup hanya dengan memanggilnya begitu di balasan saat ini saja, karena tanpa tag ini permintaan tersebut akan terlupakan di chat berikutnya.
 Contoh yang BOLEH disimpan: "panggil aku Bro ya seterusnya", "aku emang lebih suka contoh dari budaya Jepang", "aku belajarnya pelan-pelan ya jangan buru-buru kasih materi sulit".
