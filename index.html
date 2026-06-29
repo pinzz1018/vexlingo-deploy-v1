@@ -2860,8 +2860,8 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#F0EEFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
           </button>
           <input type="file" id="vex-image-file-input" accept="image/*" style="display:none;" onchange="handleVexImageSelect(event)" />
-          <!-- Tombol pilih model image — hanya muncul saat Image Mode aktif -->
-          <button id="vex-img-model-btn" onclick="toggleImgModelPicker()" style="display:none;align-items:center;gap:5px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.4);border-radius:999px;padding:6px 11px;color:#D8B4FE;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .2s;">
+          <!-- Tombol pilih model image — selalu tampil karena text mode bisa generate image juga -->
+          <button id="vex-img-model-btn" onclick="toggleImgModelPicker()" style="display:inline-flex;align-items:center;gap:5px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.4);border-radius:999px;padding:6px 11px;color:#D8B4FE;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .2s;">
             <span id="vex-img-model-label">Seedream 5</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
@@ -11476,8 +11476,8 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
       // Hapus bubble hint image mode & riwayat image
       document.getElementById('vex-img-mode-hint')?.remove();
       document.querySelectorAll('.vex-img-history-item').forEach(el => el.remove());
-      // Sembunyikan tombol model image
-      if (typeof hideImgModelBtn === 'function') hideImgModelBtn();
+      // Sembunyikan tombol model image — DINONAKTIFKAN: text mode sekarang bisa generate image juga
+      // if (typeof hideImgModelBtn === 'function') hideImgModelBtn();
       // Stop any active recording
       if (s2sState !== 'idle') s2sReset();
       s2sRestoreVexFromOrb();
