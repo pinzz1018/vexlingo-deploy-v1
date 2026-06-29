@@ -10462,7 +10462,7 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
   }
 
   // ── Image Daily Limit (Firestore) ──
-  const IMG_DAILY_LIMIT = 1; // TESTING: ganti ke 7 setelah selesai test
+  const IMG_DAILY_LIMIT = 7;
 
   async function checkAndIncrementImgLimit() {
     try {
@@ -10697,8 +10697,8 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
       }
 
       try {
-        let imagePrompt = extractImagePrompt(userText);
-        // Auto-translate ke Inggris aja (tanpa enhance art style)
+        // Translate full teks user ke Inggris dulu (tanpa dipotong), lalu strip trigger kata dari hasil translate
+        let imagePrompt = userText.trim();
         try {
           const groqKey = getGroqKey();
           if (groqKey) {
@@ -10706,7 +10706,7 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
               method: 'POST',
               headers: { 'Authorization': 'Bearer ' + groqKey, 'Content-Type': 'application/json' },
               body: JSON.stringify({ model: 'llama3-8b-8192', max_tokens: 150,
-                messages: [{ role: 'user', content: 'Translate this image prompt to English accurately. Keep the original intent and description exactly as-is, just translate. Do NOT add extra details, art styles, or descriptions. Reply ONLY with the translated prompt. If already English, return as-is. Prompt: ' + imagePrompt }]
+                messages: [{ role: 'user', content: 'Translate this image generation request to natural English. Keep the full meaning and intent. Translate naturally as an image prompt (e.g. "buatkan gambar naga" → "make me a dragon image", "buatkan saya gambar kucing lucu" → "make me a cute cat image"). Reply ONLY with the translated prompt, nothing else. If already English, return as-is. Prompt: ' + imagePrompt }]
               })
             });
             if (tr.ok) {
@@ -10715,7 +10715,10 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
               if (translated) imagePrompt = translated;
             }
           }
-        } catch(e) { /* skip translate, pakai prompt asli */ }
+        } catch(e) {
+          // Fallback: strip trigger dari teks asli kalau translate gagal
+          imagePrompt = vexImageGenMode ? userText.trim() : extractImagePrompt(userText);
+        }
         const imgUrl = await generateImageWithFal(imagePrompt);
         clearInterval(timerInterval);
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
