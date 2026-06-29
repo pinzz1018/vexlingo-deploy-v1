@@ -11349,19 +11349,6 @@ ${vexRealtimeContext}${vexAppKnowledgeContext ? '\n\n' + vexAppKnowledgeContext 
   let vexImageGenMode = false;
 
   function setImageGenMode() {
-    if (!isProUser()) {
-      closeVexModeMenu();
-      // Arahkan ke halaman Pro
-      const proBtn = document.querySelector('[onclick*="showProModal"], [onclick*="pro-modal"], #upgrade-pro-btn');
-      if (proBtn) proBtn.click();
-      else {
-        // Cari tombol upgrade apapun
-        const anyPro = document.querySelector('.pro-badge, [data-action="upgrade"]');
-        if (anyPro) anyPro.click();
-        else showToast('Upgrade ke Pro untuk fitur Generate Image! ✨', { icon: '🔒', duration: 3000 });
-      }
-      return;
-    }
     vexImageGenMode = true;
     s2sMode = 'text';
     const chatLog = document.getElementById('vex-chat-log');
