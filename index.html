@@ -10706,7 +10706,10 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
               method: 'POST',
               headers: { 'Authorization': 'Bearer ' + groqKey, 'Content-Type': 'application/json' },
               body: JSON.stringify({ model: 'llama3-8b-8192', max_tokens: 150,
-                messages: [{ role: 'user', content: 'Translate this image generation request to natural English. Keep the full meaning and intent. Translate naturally as an image prompt (e.g. "buatkan gambar naga" → "make me a dragon image", "buatkan saya gambar kucing lucu" → "make me a cute cat image"). Reply ONLY with the translated prompt, nothing else. If already English, return as-is. Prompt: ' + imagePrompt }]
+                messages: [
+                  { role: 'system', content: 'You are an expert Indonesian-to-English translator specialized in AI image generation prompts. CRITICAL Indonesian vocabulary rules:\n- "naga" = dragon (NOT snake/serpent)\n- "ular" = snake\n- "kucing" = cat\n- "anjing" = dog\n- "harimau" = tiger\n- "singa" = lion\n- "kuda" = horse\n- "bunga" = flower\n- "pemandangan" = scenery/landscape\n- "matahari terbenam/terbit" = sunset/sunrise\n- "hutan" = forest\n- "laut/lautan" = ocean/sea\n- "gunung" = mountain\n- "kastil" = castle\n- "peri" = fairy\n- "penyihir" = wizard/witch\n- "kesatria" = knight\n- "luar angkasa" = outer space\n- "galaxy/galaksi" = galaxy\nStrip trigger words like "buatkan gambar", "bikin gambar", "gambarin", "buat gambar", "buatin", "bikinin", "tampilkan", "tunjukkan", "perlihatkan", "show me", "draw me", "generate", "create", "make me a" from the final prompt. Output ONLY the clean image description in English, nothing else.' },
+                  { role: 'user', content: 'Translate this image generation request into a clean English image prompt. Strip any trigger/request words. Output ONLY the image description.\n\nExamples:\n"buatkan gambar naga" → "a majestic dragon"\n"gambarin naga api" → "a fire-breathing dragon"\n"buat gambar kucing lucu" → "a cute cat"\n"show me a sunset at the beach" → "sunset at the beach"\n"buatkan gambar ular kobra" → "a cobra snake"\n\nPrompt to translate: ' + imagePrompt }
+                ]
               })
             });
             if (tr.ok) {
