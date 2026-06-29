@@ -10692,9 +10692,9 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
           // download handled by onclick
           document.getElementById('vex-img-viewer').classList.add('active');
         };
-        const timerLabel = document.createElement('span');
-        timerLabel.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.4);';
-        timerLabel.textContent = '\u23F1 ' + elapsed + 's';
+        const timerLabel = document.createElement('div');
+        timerLabel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-top:4px;';
+        timerLabel.innerHTML = '<span style="font-size:11px;color:rgba(255,255,255,0.35);">⏱ ' + elapsed + 's</span><span style="font-size:10px;color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.07);padding:2px 7px;border-radius:20px;letter-spacing:0.3px;">Seedream 5</span>';
         bubbleWrap.appendChild(genImg);
         bubbleWrap.appendChild(timerLabel);
         // appendVexBubble expects string, use direct DOM insertion
