@@ -10462,7 +10462,7 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
   }
 
   // ── Image Daily Limit (Firestore) ──
-  const IMG_DAILY_LIMIT = 7;
+  const IMG_DAILY_LIMIT = 1; // TESTING: ganti ke 7 setelah selesai test
 
   async function checkAndIncrementImgLimit() {
     try {
@@ -10471,7 +10471,7 @@ Catatan PENTING: Jawab pertanyaan user berdasarkan info di atas dengan LENGKAP d
       const { doc, getDoc, setDoc } = window._dbFns;
       const now = new Date();
       const todayKey = now.toISOString().split('T')[0]; // YYYY-MM-DD
-      const ref = doc(db, 'imgLimits', user.uid);
+      const ref = doc(window._db, 'imgLimits', user.uid);
       const snap = await getDoc(ref);
       let data = snap.exists() ? snap.data() : {};
 
